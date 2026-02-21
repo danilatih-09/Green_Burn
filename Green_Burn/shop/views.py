@@ -2,11 +2,10 @@ from  django.http import HttpResponse
 
 def home(request):
     return HttpResponse ("""
-    Главная страница магазина Green Burn 
-
-    Ссылки:
-    /about/ - О маагазине 
-    /author/ - О авторе
+    <h1> Главная страница магазина - Green Burn <h1/>
+    <h3> Ссылки: <h3/>
+    <a href = "/about/"> О магазине <a/><br>
+    <a href = "/author/"> Об авторе <a/><br>                    
     """)
 
 def about(request):
