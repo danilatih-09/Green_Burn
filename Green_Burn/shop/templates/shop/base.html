@@ -2,9 +2,20 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <title>{% block title %}GREEN Burn{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Green Burn{% endblock %}</title>
+
+    <link href="C:\Users\Света\Downloads\ChatGPT Image 5 мар. 2026 г., 16_13_15.png" rel="stylesheet">
+
     <style>
+        :root {
+            --bg-main: #0f0f0f;
+            --bg-secondary: #151515;
+            --accent: #a3ff12;
+            --text-main: #f5f5f5;
+            --text-secondary: #bdbdbd;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,154 +23,178 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background-color: #0a0a0a;
-            color: #ffffff;
-            line-height: 1.6;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-main);
+            color: var(--text-main);
+            overflow-x: hidden;
         }
 
-        /* Navigation */
+        /* Animated top neon line */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            animation: neonMove 5s linear infinite;
+            z-index: 9999;
+        }
+
+        @keyframes neonMove {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(50%); }
+        }
+
         nav {
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d3436 100%);
-            padding: 20px 0;
             position: sticky;
             top: 0;
+            backdrop-filter: blur(16px);
+            background: rgba(15,15,15,0.75);
+            border-bottom: 1px solid rgba(163,255,18,0.1);
             z-index: 1000;
-            box-shadow: 0 4px 20px rgba(0, 208, 132, 0.1);
-            border-bottom: 2px solid #00d084;
         }
 
         .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
+            max-width: 1600px;
+            margin: auto;
+            padding: 24px 60px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .logo {
-            font-size: 28px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #00d084 0%, #00cec9 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: 2px;
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .logo:hover {
+            text-shadow: 0 0 12px var(--accent);
         }
 
         .nav-links {
             display: flex;
-            gap: 30px;
+            gap: 40px;
             list-style: none;
         }
 
         .nav-links a {
-            color: #ffffff;
             text-decoration: none;
-            font-weight: 500;
-            font-size: 15px;
-            transition: all 0.3s ease;
-            padding: 8px 16px;
-            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
             position: relative;
+            transition: 0.3s;
         }
 
-        .nav-links a::before {
-            content: '';
+        .nav-links a::after {
+            content: "";
             position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
+            left: 0;
+            bottom: -6px;
+            width: 0%;
             height: 2px;
-            background: linear-gradient(90deg, #00d084, #00cec9);
-            transition: width 0.3s ease;
+            background: var(--accent);
+            transition: 0.3s;
         }
 
         .nav-links a:hover {
-            color: #00d084;
-            background: rgba(0, 208, 132, 0.1);
+            color: var(--text-main);
         }
 
-        .nav-links a:hover::before {
-            width: 80%;
+        .nav-links a:hover::after {
+            width: 100%;
         }
 
-        /* Container */
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 40px 20px;
+            max-width: 1600px;
+            margin: auto;
+            padding: 120px 60px;
         }
 
-        /* Buttons */
         .btn {
             display: inline-block;
-            padding: 12px 30px;
-            background: linear-gradient(135deg, #00d084 0%, #00b894 100%);
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 8px;
+            padding: 14px 36px;
+            border-radius: 40px;
+            background: var(--accent);
+            color: #000;
             font-weight: 600;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0, 208, 132, 0.3);
+            text-decoration: none;
+            transition: 0.3s;
         }
 
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 208, 132, 0.5);
-            background: linear-gradient(135deg, #00cec9 0%, #00d084 100%);
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(163,255,18,0.6);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+
+        .btn-outline:hover {
+            background: var(--accent);
+            color: #000;
         }
 
         .btn-danger {
-            background: linear-gradient(135deg, #d63031 0%, #d63031 100%);
-            box-shadow: 0 4px 15px rgba(214, 48, 49, 0.3);
+            border: 1px solid #ff3b3b;
+            color: #ff3b3b;
+            background: transparent;
         }
 
         .btn-danger:hover {
-            box-shadow: 0 6px 20px rgba(214, 48, 49, 0.5);
-            background: linear-gradient(135deg, #e17055 0%, #d63031 100%);
+            background: #ff3b3b;
+            color: #000;
         }
 
-        .btn-small {
-            padding: 8px 20px;
+        footer {
+            padding: 80px 0;
+            text-align: center;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            letter-spacing: 2px;
             font-size: 14px;
         }
 
-        /* Footer */
-        footer {
-            background: #1a1a1a;
-            border-top: 2px solid #00d084;
-            padding: 30px 0;
-            margin-top: 60px;
-            text-align: center;
-            color: #636e72;
+        @media (max-width: 1000px) {
+            .nav-container { padding: 20px; }
+            .container { padding: 80px 20px; }
         }
     </style>
 </head>
-<body>
-    <nav>
-        <div class="nav-container">
-            <div class="logo">GREEN BURN</div>
-            <ul class="nav-links">
-                <li><a href="{% url 'home' %}">Главная</a></li>
-                <li><a href="{% url 'product_list' %}">Каталог</a></li>
-                <li><a href="{% url 'cart_view' %}">Корзина</a></li>
-                <li><a href="{% url 'about' %}">О магазине</a></li>
-                <li><a href="/admin/">Админка</a></li>
-            </ul>
-        </div>
-    </nav>
-    
-    <div class="container">
-        {% block content %}{% endblock %}
-    </div>
 
-    <footer>
-        <p>&copy; 2026 Green Burn. Все права защищены.</p>
-    </footer>
+<body>
+
+<nav>
+    <div class="nav-container">
+        <div class="logo">GREEN BURN</div>
+        <ul class="nav-links">
+            <li><a href="{% url 'home' %}">Главная</a></li>
+            <li><a href="{% url 'product_list' %}">Каталог</a></li>
+            <li><a href="{% url 'cart_view' %}">Корзина</a></li>
+            <li><a href="{% url 'about' %}">О магазине</a></li>
+            <li><a href="/admin/">Админка</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container">
+    {% block content %}{% endblock %}
+</div>
+
+<footer>
+    © 2026 GREEN Burn — All Rights Reserved
+</footer>
+
 </body>
 </html>

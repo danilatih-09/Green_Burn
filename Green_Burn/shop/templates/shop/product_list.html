@@ -1,278 +1,126 @@
 {% extends 'shop/base.html' %}
-
-{% block title %}Каталог товаров | Green Burn{% endblock %}
+{% block title %}Каталог | GREEN Burn{% endblock %}
 
 {% block content %}
+
 <style>
-    .page-header {
-        text-align: center;
-        margin-bottom: 50px;
-    }
+.page-header {
+    text-align: center;
+    margin-bottom: 80px;
+}
 
-    .page-header h1 {
-        font-size: 48px;
-        font-weight: 700;
-        background: linear-gradient(135deg, #00d084 0%, #00cec9 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        margin-bottom: 10px;
-    }
+.page-header h1 {
+    font-size: 60px;
+    font-weight: 900;
+}
 
-    .page-header p {
-        color: #636e72;
-        font-size: 18px;
-    }
+.filters {
+    margin-bottom: 60px;
+}
 
-    /* Filters */
-    .filters {
-        background: linear-gradient(135deg, #1a1a1a 0%, #2d3436 100%);
-        padding: 30px;
-        border-radius: 12px;
-        margin-bottom: 40px;
-        border: 1px solid rgba(0, 208, 132, 0.2);
-        box-shadow: 0 8px 32px rgba(0, 208, 132, 0.1);
-    }
+.filters form {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
 
-    .filters form {
-        display: flex;
-        gap: 20px;
-        flex-wrap: wrap;
-        align-items: flex-end;
-    }
+.filter-group select,
+.filter-group input {
+    padding: 14px 18px;
+    background: var(--bg-secondary);
+    border: 1px solid #222;
+    color: var(--text-main);
+    border-radius: 12px;
+}
 
-    .filter-group {
-        flex: 1;
-        min-width: 200px;
-    }
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 40px;
+}
 
-    .filter-group label {
-        display: block;
-        margin-bottom: 8px;
-        color: #00d084;
-        font-weight: 600;
-        font-size: 14px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
+.product-card {
+    background: var(--bg-secondary);
+    border-radius: 24px;
+    overflow: hidden;
+    transition: 0.4s;
+}
 
-    .filter-group select,
-    .filter-group input {
-        width: 100%;
-        padding: 12px 16px;
-        background: #0a0a0a;
-        border: 2px solid #2d3436;
-        border-radius: 8px;
-        color: #ffffff;
-        font-size: 15px;
-        transition: all 0.3s ease;
-    }
+.product-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
 
-    .filter-group select:focus,
-    .filter-group input:focus {
-        outline: none;
-        border-color: #00d084;
-        box-shadow: 0 0 0 3px rgba(0, 208, 132, 0.1);
-    }
+.product-image {
+    height: 320px;
+    object-fit: contain;
+    background: #111;
+}
 
-    .filter-group select option {
-        background: #1a1a1a;
-        color: #ffffff;
-    }
+.product-info {
+    padding: 30px;
+}
 
-    /* Product Grid */
-    .product-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 30px;
-        margin-bottom: 40px;
-    }
+.product-name {
+    font-size: 20px;
+    margin-bottom: 12px;
+}
 
-    .product-card {
-        background: linear-gradient(135deg, #1a1a1a 0%, #2d3436 100%);
-        border-radius: 12px;
-        overflow: hidden;
-        border: 1px solid rgba(0, 208, 132, 0.2);
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    }
+.product-price {
+    font-size: 22px;
+    color: var(--accent);
+    margin-bottom: 20px;
+}
 
-    .product-card:hover {
-        transform: translateY(-8px);
-        border-color: #00d084;
-        box-shadow: 0 12px 40px rgba(0, 208, 132, 0.3);
-    }
-
-    .product-image {
-        width: 100%;
-        height: 280px;
-        object-fit: cover;
-        background: #0a0a0a;
-        border-bottom: 2px solid rgba(0, 208, 132, 0.3);
-    }
-
-    .product-image-placeholder {
-        width: 100%;
-        height: 280px;
-        background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #00d084;
-        font-size: 18px;
-        border-bottom: 2px solid rgba(0, 208, 132, 0.3);
-    }
-
-    .product-info {
-        padding: 25px;
-    }
-
-    .product-name {
-        font-size: 22px;
-        font-weight: 700;
-        margin-bottom: 12px;
-        color: #ffffff;
-    }
-
-    .product-price {
-        font-size: 28px;
-        font-weight: 700;
-        color: #00d084;
-        margin-bottom: 15px;
-    }
-
-    .product-price span {
-        font-size: 16px;
-        color: #636e72;
-        font-weight: 400;
-    }
-
-    .product-meta {
-        margin-bottom: 20px;
-    }
-
-    .product-meta p {
-        color: #b2bec3;
-        font-size: 14px;
-        margin-bottom: 8px;
-    }
-
-    .product-meta strong {
-        color: #00d084;
-    }
-
-    .product-actions {
-        display: flex;
-        gap: 10px;
-    }
-
-    .product-actions .btn {
-        flex: 1;
-        text-align: center;
-    }
-
-    .empty-state {
-        text-align: center;
-        padding: 80px 20px;
-        color: #636e72;
-    }
-
-    .empty-state h2 {
-        font-size: 32px;
-        margin-bottom: 20px;
-        color: #2d3436;
-    }
-
-    .stats {
-        text-align: center;
-        color: #636e72;
-        font-size: 16px;
-        margin-top: 30px;
-        padding-top: 30px;
-        border-top: 1px solid #2d3436;
-    }
-
-    .stats strong {
-        color: #00d084;
-    }
+.product-actions {
+    display: flex;
+    gap: 10px;
+}
 </style>
 
 <div class="page-header">
-    <h1>КАТАЛОГ ТОВАРОВ</h1>
-    <p>Найдите всё для флористики и декора</p>
+    <h1>Каталог</h1>
 </div>
 
-<!-- Filters -->
 <div class="filters">
     <form method="get">
         <div class="filter-group">
-            <label>Категория</label>
             <select name="category">
                 <option value="">Все категории</option>
                 {% for cat in categories %}
-                <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>
-                    {{ cat.name }}
-                </option>
+                <option value="{{ cat.id }}">{{ cat.name }}</option>
                 {% endfor %}
             </select>
         </div>
-        
+
         <div class="filter-group">
-            <label>Производитель</label>
-            <select name="manufacturer">
-                <option value="">Все производители</option>
-                {% for manuf in manufacturers %}
-                <option value="{{ manuf.id }}" {% if selected_manufacturer == manuf.id|stringformat:"s" %}selected{% endif %}>
-                    {{ manuf.name }}
-                </option>
-                {% endfor %}
-            </select>
+            <input type="text" name="search" placeholder="Поиск...">
         </div>
-        
-        <div class="filter-group">
-            <label>Поиск</label>
-            <input type="text" name="search" value="{{ search_query }}" placeholder="Название товара...">
-        </div>
-        
-        <button type="submit" class="btn">Применить фильтры</button>
+
+        <button class="btn">Применить</button>
     </form>
 </div>
 
-<!-- Products -->
 <div class="product-grid">
     {% for product in products %}
     <div class="product-card">
         {% if product.photo %}
-        <img src="{{ product.photo.url }}" alt="{{ product.name }}" class="product-image">
+        <img src="{{ product.photo.url }}" class="product-image">
         {% else %}
-        <div class="product-image-placeholder">Нет фото</div>
+        <div class="product-image"></div>
         {% endif %}
-        
+
         <div class="product-info">
-            <h3 class="product-name">{{ product.name }}</h3>
-            <div class="product-price">{{ product.price }} <span>BYN</span></div>
-            
-            <div class="product-meta">
-                <p><strong>Категория:</strong> {{ product.category.name }}</p>
-                <p><strong>Производитель:</strong> {{ product.manufacturer.name }}</p>
-                <p><strong>На складе:</strong> {{ product.quantities_stock }} шт.</p>
-            </div>
-            
+            <div class="product-name">{{ product.name }}</div>
+            <div class="product-price">{{ product.price }} BYN</div>
+
             <div class="product-actions">
-                <a href="{% url 'product_detail' product.pk %}" class="btn btn-small">Подробнее</a>
-                <a href="{% url 'add_to_cart' product.id %}" class="btn btn-small">В корзину</a>
+                <a href="{% url 'product_detail' product.pk %}" class="btn btn-outline">Подробнее</a>
+                <a href="{% url 'add_to_cart' product.id %}" class="btn">В корзину</a>
             </div>
         </div>
-    </div>
-    {% empty %}
-    <div class="empty-state" style="grid-column: 1/-1;">
-        <h2>Товары не найдены</h2>
-        <p>Попробуйте изменить параметры поиска</p>
     </div>
     {% endfor %}
 </div>
 
-<div class="stats">
-    Всего товаров: <strong>{{ products.count }}</strong>
-</div>
 {% endblock %}

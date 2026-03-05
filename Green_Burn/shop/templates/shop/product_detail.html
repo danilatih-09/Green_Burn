@@ -1,206 +1,155 @@
 {% extends 'shop/base.html' %}
-
-{% block title %}{{ product.name }} | Green Burn{% endblock %}
+{% block title %}{{ product.name }} | GREEN Burn{% endblock %}
 
 {% block content %}
+
 <style>
-    .back-link {
-        display: inline-block;
-        margin-bottom: 30px;
-        color: #00d084;
-        text-decoration: none;
-        font-weight: 500;
-        transition: all 0.3s ease;
-    }
+.back-link {
+    display: inline-block;
+    margin-bottom: 40px;
+    color: var(--accent);
+    text-decoration: none;
+    transition: 0.3s;
+}
 
-    .back-link:hover {
-        color: #00cec9;
-        transform: translateX(-5px);
-    }
+.back-link:hover {
+    text-shadow: 0 0 10px var(--accent);
+}
 
+.product-detail {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    background: var(--bg-secondary);
+    padding: 80px;
+    border-radius: 36px;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+}
+
+.product-image-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #111;
+    border-radius: 28px;
+    padding: 40px;
+}
+
+.product-image-large {
+    max-width: 100%;
+    border-radius: 20px;
+}
+
+.product-info-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.product-category {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+}
+
+.product-title {
+    font-size: 56px;
+    font-weight: 900;
+    margin-bottom: 30px;
+}
+
+.product-price-large {
+    font-size: 40px;
+    color: var(--accent);
+    margin-bottom: 30px;
+}
+
+.product-description {
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin-bottom: 40px;
+}
+
+.product-specs {
+    background: #111;
+    padding: 30px;
+    border-radius: 20px;
+    margin-bottom: 40px;
+}
+
+.spec-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    color: var(--text-secondary);
+}
+
+.spec-row span:last-child {
+    color: var(--text-main);
+}
+
+.product-actions-large .btn {
+    padding: 18px 40px;
+    font-size: 16px;
+}
+
+@media (max-width: 1100px) {
     .product-detail {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 50px;
-        background: linear-gradient(135deg, #1a1a1a 0%, #2d3436 100%);
-        border-radius: 16px;
-        overflow: hidden;
-        border: 1px solid rgba(0, 208, 132, 0.2);
-        box-shadow: 0 8px 32px rgba(0, 208, 132, 0.1);
-    }
-
-    .product-image-section {
-        background: #0a0a0a;
+        grid-template-columns: 1fr;
         padding: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
     }
-
-    .product-image-large {
-        max-width: 100%;
-        height: auto;
-        border-radius: 12px;
-        border: 2px solid rgba(0, 208, 132, 0.3);
-    }
-
-    .product-image-placeholder {
-        width: 100%;
-        height: 500px;
-        background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #00d084;
-        font-size: 24px;
-        border-radius: 12px;
-        border: 2px solid rgba(0, 208, 132, 0.3);
-    }
-
-    .product-info-section {
-        padding: 50px;
-    }
-
-    .product-category {
-        display: inline-block;
-        padding: 6px 16px;
-        background: rgba(0, 208, 132, 0.1);
-        border: 1px solid #00d084;
-        border-radius: 20px;
-        color: #00d084;
-        font-size: 13px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 20px;
-    }
-
-    .product-title {
-        font-size: 42px;
-        font-weight: 700;
-        margin-bottom: 20px;
-        color: #ffffff;
-        line-height: 1.2;
-    }
-
-    .product-price-large {
-        font-size: 48px;
-        font-weight: 700;
-        color: #00d084;
-        margin-bottom: 30px;
-    }
-
-    .product-price-large span {
-        font-size: 24px;
-        color: #636e72;
-        font-weight: 400;
-    }
-
-    .product-description {
-        margin-bottom: 30px;
-        line-height: 1.8;
-        color: #b2bec3;
-        font-size: 16px;
-    }
-
-    .product-specs {
-        background: #0a0a0a;
-        padding: 25px;
-        border-radius: 12px;
-        margin-bottom: 30px;
-        border: 1px solid rgba(0, 208, 132, 0.2);
-    }
-
-    .spec-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 12px 0;
-        border-bottom: 1px solid #2d3436;
-    }
-
-    .spec-row:last-child {
-        border-bottom: none;
-    }
-
-    .spec-label {
-        color: #636e72;
-        font-weight: 500;
-    }
-
-    .spec-value {
-        color: #00d084;
-        font-weight: 600;
-    }
-
-    .product-actions-large {
-        display: flex;
-        gap: 15px;
-    }
-
-    .product-actions-large .btn {
-        flex: 1;
-        padding: 18px 30px;
-        font-size: 16px;
-        text-align: center;
-    }
-
-    @media (max-width: 768px) {
-        .product-detail {
-            grid-template-columns: 1fr;
-        }
-        
-        .product-info-section {
-            padding: 30px;
-        }
-        
-        .product-title {
-            font-size: 32px;
-        }
-        
-        .product-price-large {
-            font-size: 36px;
-        }
-    }
+}
 </style>
 
 <a href="{% url 'product_list' %}" class="back-link">← Назад к каталогу</a>
 
 <div class="product-detail">
+
     <div class="product-image-section">
         {% if product.photo %}
-        <img src="{{ product.photo.url }}" alt="{{ product.name }}" class="product-image-large">
+            <img src="{{ product.photo.url }}" class="product-image-large">
         {% else %}
-        <div class="product-image-placeholder">Нет фото</div>
+            <div style="height:400px;"></div>
         {% endif %}
     </div>
-    
+
     <div class="product-info-section">
-        <span class="product-category">{{ product.category.name }}</span>
+        <div class="product-category">{{ product.category.name }}</div>
+
         <h1 class="product-title">{{ product.name }}</h1>
-        <div class="product-price-large">{{ product.price }} <span>BYN</span></div>
-        
+
+        <div class="product-price-large">
+            {{ product.price }} BYN
+        </div>
+
         <div class="product-description">
             {{ product.description }}
         </div>
-        
+
         <div class="product-specs">
             <div class="spec-row">
-                <span class="spec-label">Производитель</span>
-                <span class="spec-value">{{ product.manufacturer.name }} ({{ product.manufacturer.country }})</span>
+                <span>Производитель</span>
+                <span>{{ product.manufacturer.name }}</span>
             </div>
             <div class="spec-row">
-                <span class="spec-label">На складе</span>
-                <span class="spec-value">{{ product.quantities_stock }} шт.</span>
+                <span>Страна</span>
+                <span>{{ product.manufacturer.country }}</span>
             </div>
             <div class="spec-row">
-                <span class="spec-label">Категория</span>
-                <span class="spec-value">{{ product.category.name }}</span>
+                <span>На складе</span>
+                <span>{{ product.quantities_stock }} шт.</span>
             </div>
         </div>
-        
+
         <div class="product-actions-large">
-            <a href="{% url 'add_to_cart' product.id %}" class="btn">Добавить в корзину</a>
+            <a href="{% url 'add_to_cart' product.id %}" class="btn">
+                Добавить в корзину
+            </a>
         </div>
     </div>
+
 </div>
+
 {% endblock %}
