@@ -36,7 +36,7 @@ class Product (models.Model):
     name = models.CharField(max_length=200, verbose_name="Название")
     description = models.TextField(verbose_name="Описание")
     #upload_to= 'products/' - сохранение фоток в папку 
-    photo = models.ImageField(upload_to= 'products/',verbose_name="Фото")
+    photo = models.ImageField(upload_to= 'products/',blank = True, null = True, verbose_name="Фото")
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Цена") # сколько до запятой и после
     quantities_stock = models.IntegerField(verbose_name="Количество на складе")
     # связь с классом категория, on_delete=models.CASCADE - если удалить категорию, удалятся все товары в ней 
@@ -82,7 +82,7 @@ class Cart(models.Model):
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE,related_name='items', verbose_name="Корзина")
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name="Товар")
-    quantities = models.PositiveIntegerField(verbose_name= "Количество")
+    quantities = models.PositiveIntegerField(default=1, verbose_name= "Количество")
 
     def __str__(self):
         return f"{self.product.name} ({self.product.quantities_stock } шт)"

@@ -1,0 +1,276 @@
+{% extends 'shop/base.html' %}
+
+{% block title %}Корзина | Green Burn{% endblock %}
+
+{% block content %}
+<style>
+    .page-title {
+        font-size: 42px;
+        font-weight: 700;
+        margin-bottom: 40px;
+        background: linear-gradient(135deg, #00d084 0%, #00cec9 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .cart-container {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d3436 100%);
+        border-radius: 16px;
+        padding: 40px;
+        border: 1px solid rgba(0, 208, 132, 0.2);
+        box-shadow: 0 8px 32px rgba(0, 208, 132, 0.1);
+    }
+
+    .cart-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 30px;
+    }
+
+    .cart-table thead {
+        background: #0a0a0a;
+    }
+
+    .cart-table th {
+        padding: 18px;
+        text-align: left;
+        color: #00d084;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 13px;
+        border-bottom: 2px solid #00d084;
+    }
+
+    .cart-table td {
+        padding: 25px 18px;
+        border-bottom: 1px solid #2d3436;
+        vertical-align: middle;
+    }
+
+    .cart-table tbody tr {
+        transition: all 0.3s ease;
+    }
+
+    .cart-table tbody tr:hover {
+        background: rgba(0, 208, 132, 0.05);
+    }
+
+    .cart-item-info {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .cart-item-image {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 2px solid rgba(0, 208, 132, 0.3);
+    }
+
+    .cart-item-image-placeholder {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #00d084;
+        border-radius: 8px;
+        border: 2px solid rgba(0, 208, 132, 0.3);
+        font-size: 12px;
+    }
+
+    .cart-item-name {
+        font-weight: 600;
+        color: #ffffff;
+        font-size: 16px;
+    }
+
+    .cart-item-price {
+        color: #00d084;
+        font-weight: 600;
+        font-size: 16px;
+    }
+
+    .quantity-control {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .quantity-control input {
+        width: 70px;
+        padding: 10px;
+        background: #0a0a0a;
+        border: 2px solid #2d3436;
+        border-radius: 8px;
+        color: #ffffff;
+        text-align: center;
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    .quantity-control input:focus {
+        outline: none;
+        border-color: #00d084;
+    }
+
+    .quantity-control button {
+        padding: 10px 20px;
+        background: linear-gradient(135deg, #00d084 0%, #00b894 100%);
+        border: none;
+        border-radius: 8px;
+        color: #ffffff;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .quantity-control button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 208, 132, 0.4);
+    }
+
+    .cart-item-total {
+        font-weight: 700;
+        color: #00d084;
+        font-size: 18px;
+    }
+
+    .cart-actions {
+        text-align: right;
+    }
+
+    .cart-summary {
+        background: #0a0a0a;
+        padding: 30px;
+        border-radius: 12px;
+        margin-top: 30px;
+        border: 2px solid rgba(0, 208, 132, 0.3);
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        color: #b2bec3;
+        font-size: 16px;
+    }
+
+    .summary-row.total {
+        border-top: 2px solid #00d084;
+        padding-top: 20px;
+        margin-top: 20px;
+        font-size: 28px;
+        font-weight: 700;
+        color: #ffffff;
+    }
+
+    .summary-row.total span:last-child {
+        color: #00d084;
+    }
+
+    .empty-cart {
+        text-align: center;
+        padding: 80px 20px;
+    }
+
+    .empty-cart h2 {
+        font-size: 32px;
+        margin-bottom: 20px;
+        color: #2d3436;
+    }
+
+    .empty-cart p {
+        color: #636e72;
+        margin-bottom: 30px;
+        font-size: 18px;
+    }
+
+    .continue-shopping {
+        display: inline-block;
+        margin-top: 30px;
+        color: #00d084;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .continue-shopping:hover {
+        color: #00cec9;
+        transform: translateX(-5px);
+    }
+</style>
+
+<h1 class="page-title">КОРЗИНА</h1>
+
+{% if cart_items %}
+<div class="cart-container">
+    <table class="cart-table">
+        <thead>
+            <tr>
+                <th>Товар</th>
+                <th>Цена</th>
+                <th>Количество</th>
+                <th>Стоимость</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in cart_items %}
+            <tr>
+                <td>
+                    <div class="cart-item-info">
+                        {% if item.product.photo %}
+                        <img src="{{ item.product.photo.url }}" alt="{{ item.product.name }}" class="cart-item-image">
+                        {% else %}
+                        <div class="cart-item-image-placeholder">Нет фото</div>
+                        {% endif %}
+                        <div class="cart-item-name">{{ item.product.name }}</div>
+                    </div>
+                </td>
+                <td class="cart-item-price">{{ item.product.price }} BYN</td>
+                <td>
+                    <form method="post" action="{% url 'update_cart' item.id %}" class="quantity-control">
+                        {% csrf_token %}
+                        <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.product.quantities_stock }}">
+                        <button type="submit">OK</button>
+                    </form>
+                </td>
+                <td class="cart-item-total">{{ item.item_cost }} BYN</td>
+                <td class="cart-actions">
+                    <a href="{% url 'remove_from_cart' item.id %}" class="btn btn-danger btn-small">Удалить</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="cart-summary">
+        <div class="summary-row">
+            <span>Товаров в корзине:</span>
+            <span>{{ cart_items.count }}</span>
+        </div>
+        <div class="summary-row total">
+            <span>Итого:</span>
+            <span>{{ total_cost }} BYN</span>
+        </div>
+    </div>
+    
+    <div style="text-align: right; margin-top: 30px;">
+        <a href="{% url 'product_list' %}" class="continue-shopping">← Продолжить покупки</a>
+    </div>
+</div>
+
+{% else %}
+<div class="empty-cart">
+    <h2>Ваша корзина пуста</h2>
+    <p>Добавьте товары из каталога</p>
+    <a href="{% url 'product_list' %}" class="btn">Перейти к каталогу</a>
+</div>
+{% endif %}
+{% endblock %}

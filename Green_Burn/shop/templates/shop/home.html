@@ -1,0 +1,276 @@
+{% extends 'shop/base.html' %}
+
+{% block title %}Green Burn - Главная{% endblock %}
+
+{% block content %}
+<style>
+    /* Hero Section */
+    .hero {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d3436 100%);
+        border-radius: 16px;
+        padding: 80px 60px;
+        text-align: center;
+        margin-bottom: 60px;
+        border: 2px solid rgba(0, 208, 132, 0.3);
+        box-shadow: 0 8px 32px rgba(0, 208, 132, 0.2);
+    }
+
+    .hero-logo {
+        font-size: 72px;
+        font-weight: 700;
+        background: linear-gradient(135deg, #00d084 0%, #00cec9 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 20px;
+        letter-spacing: 4px;
+    }
+
+    .hero-subtitle {
+        font-size: 24px;
+        color: #b2bec3;
+        margin-bottom: 40px;
+        line-height: 1.6;
+    }
+
+    .hero-buttons {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        margin-top: 30px;
+    }
+
+    /* Features */
+    .features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 30px;
+        margin-bottom: 60px;
+    }
+
+    .feature-card {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d3436 100%);
+        padding: 40px 30px;
+        border-radius: 12px;
+        text-align: center;
+        border: 1px solid rgba(0, 208, 132, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-8px);
+        border-color: #00d084;
+        box-shadow: 0 12px 40px rgba(0, 208, 132, 0.3);
+    }
+
+    .feature-icon {
+        font-size: 48px;
+        margin-bottom: 20px;
+    }
+
+    .feature-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 15px;
+    }
+
+    .feature-text {
+        color: #636e72;
+        line-height: 1.6;
+    }
+
+    /* Products Preview */
+    .section-title {
+        font-size: 42px;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 50px;
+        background: linear-gradient(135deg, #00d084 0%, #00cec9 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 30px;
+        margin-bottom: 40px;
+    }
+
+    .product-card {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d3436 100%);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(0, 208, 132, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .product-card:hover {
+        transform: translateY(-8px);
+        border-color: #00d084;
+        box-shadow: 0 12px 40px rgba(0, 208, 132, 0.3);
+    }
+
+    .product-image {
+        width: 100%;
+        height: 280px;
+        object-fit: cover;
+        background: #0a0a0a;
+        border-bottom: 2px solid rgba(0, 208, 132, 0.3);
+    }
+
+    .product-image-placeholder {
+        width: 100%;
+        height: 280px;
+        background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #00d084;
+        font-size: 18px;
+        border-bottom: 2px solid rgba(0, 208, 132, 0.3);
+    }
+
+    .product-info {
+        padding: 25px;
+    }
+
+    .product-name {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 12px;
+        color: #ffffff;
+    }
+
+    .product-price {
+        font-size: 28px;
+        font-weight: 700;
+        color: #00d084;
+        margin-bottom: 20px;
+    }
+
+    .product-price span {
+        font-size: 16px;
+        color: #636e72;
+        font-weight: 400;
+    }
+
+    .view-all {
+        text-align: center;
+        margin-top: 40px;
+    }
+
+    /* About Preview */
+    .about-preview {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d3436 100%);
+        border-radius: 16px;
+        padding: 60px;
+        margin: 60px 0;
+        border: 2px solid rgba(0, 208, 132, 0.2);
+        text-align: center;
+    }
+
+    .about-preview h2 {
+        font-size: 36px;
+        margin-bottom: 30px;
+        background: linear-gradient(135deg, #00d084 0%, #00cec9 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .about-preview p {
+        color: #b2bec3;
+        font-size: 18px;
+        line-height: 1.8;
+        margin-bottom: 30px;
+    }
+</style>
+
+<!-- Hero Section -->
+<div class="hero">
+    <div class="hero-logo">GREEN BURN</div>
+    <div class="hero-subtitle">
+        Флористика и сувениры с душой<br>
+        Всё для создания красоты и уюта
+    </div>
+    <div class="hero-buttons">
+        <a href="{% url 'product_list' %}" class="btn" style="font-size: 18px; padding: 15px 40px;">
+            Перейти в каталог
+        </a>
+        <a href="{% url 'about' %}" class="btn" style="font-size: 18px; padding: 15px 40px; background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);">
+            О магазине
+        </a>
+    </div>
+</div>
+
+<!-- Features -->
+<div class="features">
+    <div class="feature-card">
+        <div class="feature-icon">🚚</div>
+        <div class="feature-title">Доставка по Беларуси</div>
+        <div class="feature-text">Быстрая и надёжная доставка по всей стране</div>
+    </div>
+    <div class="feature-card">
+        <div class="feature-icon">💎</div>
+        <div class="feature-title">Качественные товары</div>
+        <div class="feature-text">Только проверенные производители</div>
+    </div>
+    <div class="feature-card">
+        <div class="feature-icon">🏷️</div>
+        <div class="feature-title">Честные цены</div>
+        <div class="feature-text">Прямые поставки без посредников</div>
+    </div>
+    <div class="feature-card">
+        <div class="feature-icon">🎁</div>
+        <div class="feature-title">Опт и розница</div>
+        <div class="feature-text">Выгодные условия для флористов и студий</div>
+    </div>
+</div>
+
+<!-- Products Preview -->
+<h2 class="section-title">Популярные товары</h2>
+<div class="product-grid">
+    {% for product in products %}
+    <div class="product-card">
+        {% if product.photo %}
+        <img src="{{ product.photo.url }}" alt="{{ product.name }}" class="product-image">
+        {% else %}
+        <div class="product-image-placeholder">Нет фото</div>
+        {% endif %}
+        
+        <div class="product-info">
+            <h3 class="product-name">{{ product.name }}</h3>
+            <div class="product-price">{{ product.price }} <span>BYN</span></div>
+            <a href="{% url 'product_detail' product.pk %}" class="btn" style="width: 100%; text-align: center;">
+                Подробнее
+            </a>
+        </div>
+    </div>
+    {% empty %}
+    <p style="grid-column: 1/-1; text-align: center; color: #636e72; font-size: 18px;">
+        Товары пока не добавлены. <a href="/admin/" style="color: #00d084;">Добавить в админке</a>
+    </p>
+    {% endfor %}
+</div>
+
+<div class="view-all">
+    <a href="{% url 'product_list' %}" class="btn" style="font-size: 16px; padding: 15px 40px;">
+        Смотреть все товары
+    </a>
+</div>
+
+<!-- About Preview -->
+<div class="about-preview">
+    <h2>О магазине</h2>
+    <p>
+        Green Burn — это минский магазин для тех, кто создаёт красоту. 
+        Мы предлагаем всё для флористики: горшки, кашпо, ленты, упаковку и многое другое.
+    </p>
+    <a href="{% url 'about' %}" class="btn" style="font-size: 16px; padding: 15px 40px;">
+        Узнать больше
+    </a>
+</div>
+{% endblock %}
