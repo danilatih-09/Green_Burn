@@ -11,8 +11,9 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 80px 0 60px 0;
-    min-height: 75vh;
+    padding: 60px 0 40px 0;
+    min-height: 70vh;
+    margin: 0;
 }
 
 .hero-content {
@@ -38,22 +39,26 @@
 }
 
 .hero-image {
-    width: 55%;
+    width: 75%;
     max-height: 500px;
     object-fit: contain;
     border-radius: 25px;
-
-    /* 1. Убираем черный фон картинки, чтобы осталась только роза */
     mix-blend-mode: screen;
-
-    /* 2. Свечение именно по КОНТУРУ розы, а не по краям квадрата */
     filter: drop-shadow(0 0 25px rgba(254, 255, 252, 0.949));
+}
 
+.text {
+    margin: 40px 0 30px 0;
+    text-align: center;
+    font-size: 53px;
+    font-weight: 900;
+    padding: 30px 0;
 }
 
 
 .features {
-    padding: 80px 0;
+    padding: 60px 0;
+    margin: 30px 0;
 }
 
 .features-grid {
@@ -63,6 +68,7 @@
 }
 
 .feature-card {
+    text-align: center;
     background: var(--bg-secondary);
     padding: 40px 30px;
     border-radius: 20px;
@@ -85,10 +91,10 @@
     transform: translateY(-5px);
 }
 
-
 .about-store {
-    padding: 100px 0;
+    padding: 80px 0;
     text-align: center;
+    margin: 30px 0;
 }
 
 .about-store h2 {
@@ -102,9 +108,7 @@
     color: var(--text-secondary);
 }
 
-
 @media (max-width: 1100px) {
-
     .hero {
         flex-direction: column;
         text-align: center;
@@ -121,7 +125,6 @@
 }
 
 @media (max-width: 700px) {
-
     .features-grid {
         grid-template-columns: 1fr;
     }
@@ -146,11 +149,14 @@
     </div>
 
     <div class="hero-image-wrapper">
-        <img src="{% static 'images/BURN.jpg' %}" 
+        <img src="{% static 'images/logo.jpg' %}" 
              alt="GREEN_BURN" 
              class="hero-image">
     </div>
 </section>
+
+<p class="text"> Assortment </p>
+
 
 
 <section class="features">
