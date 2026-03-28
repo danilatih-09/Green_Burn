@@ -126,3 +126,11 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / "static", 
 ]
+
+# для отправки по EMAIL
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'        # SMTP-сервер Gmail
+EMAIL_PORT = 587                     # Порт для TLS
+EMAIL_USE_TLS = True                 # Используем шифрование
+EMAIL_HOST_USER = ''      # Ваша почта, с которой будут отправляться письма
+EMAIL_HOST_PASSWORD = ''    # Пароль или app password

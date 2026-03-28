@@ -4,6 +4,12 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from .models import Product, Category, Manufacturer, Cart, CartItem
 
+from django.core.mail import send_mail 
+from openpyxl import Workbook
+import random
+from datetime import datetime
+
+
 def home(request):
     """Главная страница"""
     products = Product.objects.all()[:6]  # Показываем первые 6 товаров
@@ -175,3 +181,61 @@ def cart_view(request):
     }
     
     return render(request, 'shop/cart.html', context)
+
+
+# Оформление заказа
+
+@login_required  # только зареганные пользователи 
+def checkout(request):
+    message = ""
+    if request.method == "POST":
+        # Берем данные из формы
+        first_name = request.POST.get("first_name", "").strip()
+        last_name = request.POST.get("last_name", "").strip()
+        email = request.POST.get("email", "").strip()
+        address = request.POST.get("address", "").strip()
+
+        if not all([first_name, last_name, email, address]):
+            message = "Пожалуйста, заполните все поля."
+        else:
+            # генерация номера заказа
+            order_number = random.randint(100000, 999999)
+
+            # дата и время заказа
+            order_date = datetime.now()
+
+            # создаем Excel файл
+            workbook = Workbook()
+            sheet = workbook.active
+
+            sheet["A1"] = "Чек заказа"
+            sheet["A3"] = "Номер заказа:"
+            sheet["B3"] = order_number
+
+            sheet["A4"] = "Покупатель:"
+            sheet["B4"] = f"{first_name} {last_name}"
+
+            sheet["A5"] = "Email:"
+            sheet["B5"] = email
+
+            sheet["A6"] = "Адрес доставки:"
+            sheet["B6"] = address
+
+            sheet["A7"] = "Дата заказа:"
+            sheet["B7"] = order_date.strftime("%d-%m-%Y %H:%M")
+
+            filename = f"order_{order_number}.xlsx"
+            workbook.save(filename)
+
+            # отправка письма на email из формы
+            send_mail(
+                "Ваш заказ оформлен",
+                f"Спасибо за покупку! Номер вашего заказа: {order_number}",
+                "shop@example.com",  # от кого
+                [email],             # кому
+                fail_silently=False,
+            )
+
+            message = f"Заказ {order_number} оформлен! Чек создан."
+
+    return render(request, "shop/checkout.html", {"message": message})
