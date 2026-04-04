@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'shop',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -134,3 +135,15 @@ EMAIL_PORT = 587                     # Порт для TLS
 EMAIL_USE_TLS = True                 # Используем шифрование
 EMAIL_HOST_USER = ''      # Ваша почта, с которой будут отправляться письма
 EMAIL_HOST_PASSWORD = ''    # Пароль или app password
+
+#Аунтентификация
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ],
+
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}

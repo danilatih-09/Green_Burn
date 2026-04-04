@@ -9,6 +9,15 @@ from openpyxl import Workbook
 import random
 from datetime import datetime
 
+from rest_framework import viewsets
+from .serializers import (
+    ProductSerializer,
+    CategorySerializer,
+    ManufacturerSerializer,
+    CartSerializer,
+    CartItemSerializer
+)
+
 
 def home(request):
     """Главная страница"""
@@ -239,3 +248,32 @@ def checkout(request):
             message = f"Заказ {order_number} оформлен! Чек создан."
 
     return render(request, "shop/checkout.html", {"message": message})
+
+class ProductViewSet(viewsets.ModelViewSet):
+ #ViewSet в Django REST Framework — это класс, который создаёт API для модели.
+#Он автоматически делает основные операции с данными:
+#получить список (GET)
+#получить один объект (GET id)
+#создать (POST)
+#обновить (PUT/PATCH)
+#удалить (DELETE)
+    queryset = Product.objects.all() #queryset — это данные из базы данных, с которыми будет работать API. То есть получить все данные
+    serializer_class = ProductSerializer #Serializer нужен чтобы преобразовать модель → JSON.
+
+#Создай API для модели Product, бери данные из базы, используй ProductSerializer для JSON.
+
+class ManufacturerViewSet(viewsets.ModelViewSet):
+    queryset = Manufacturer.objects.all()
+    serializer_class =  ManufacturerSerializer
+
+class CartViewSet(viewsets.ModelViewSet):
+    queryset=Cart.objects.all()
+    serializer_class = CartSerializer
+
+class CartItemViewSet(viewsets.ModelViewSet):
+    queryset = CartItem.objects.all()
+    serializer_class = CartItemSerializer
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    queryset =  Category.objects.all()
+    serializer_class = CategorySerializer
