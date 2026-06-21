@@ -65,6 +65,9 @@
             align-items: center;
         }
 
+        a {
+        text-decoration: none;
+        }
         .logo {
             font-size: 26px;
             font-weight: 800;
@@ -72,10 +75,9 @@
             text-transform: uppercase;
             transition: 0.3s;
             cursor: pointer;
-        }
-
-        .logo:hover {
-            text-shadow: 0 0 12px var(--accent);
+            color: white;
+            text-decoration: none;
+            text-align: center;
         }
 
         .nav-links {
@@ -177,9 +179,11 @@
 
 <nav>
     <div class="nav-container">
-        <div class="logo">GREEN BURN</div>
+        <a href="{% url 'home' %}">
+            <div class="logo">GREEN BURN</div>
+        </a>
+
         <ul class="nav-links">
-            <li><a href="{% url 'home' %}">Главная</a></li>
             <li><a href="{% url 'product_list' %}">Каталог</a></li>
             <li><a href="{% url 'cart_view' %}">Корзина</a></li>
             <li><a href="{% url 'about' %}">О магазине</a></li>
