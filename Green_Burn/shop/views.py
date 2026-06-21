@@ -1,53 +1,129 @@
-from  django.http import HttpResponse 
+from  django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import login as auth_login
+from django.contrib.auth.views import LoginView, LogoutView
+from django.urls import reverse_lazy
 from django.db.models import Q
-from .models import Product, Category, Manufacturer, Cart, CartItem
+from django.core.paginator import Paginator
+from django.views.decorators.http import require_POST
+from .models import Product, Category, Manufacturer, Cart, CartItem, Order, OrderItem
+from .forms import RegisterForm
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 from django.core.mail import send_mail 
 from openpyxl import Workbook
 import random
+import json
 from datetime import datetime
 
-from rest_framework import viewsets
+from rest_framework import viewsets, generics, permissions
 from .serializers import (
     ProductSerializer,
     CategorySerializer,
     ManufacturerSerializer,
     CartSerializer,
-    CartItemSerializer
+    CartItemSerializer,
+    ProfileSerializer,
+    OrderSerializer,
 )
+from .permissions import IsAdminRoleOrReadOnly
 
 
+@ensure_csrf_cookie  # гарантирует cookie csrftoken с первого визита на сайт —
+# без этого декоратора cookie появлялся только "случайно", если на странице
+# рендерилась хотя бы одна форма с {% csrf_token %} (например форма логаута в base.html
+# для залогиненных). Для анонимного посетителя без этого декоратора cookie мог
+# не появиться вообще, и fetch с каталога не находил бы токен через getCsrfToken()
 def home(request):
     """Главная страница"""
     products = Product.objects.all()[:6]  # Показываем первые 6 товаров
-    
+    # добавил категории в контекст, чтобы на главной можно было вывести плитки категорий
+    categories = Category.objects.all()
+
     context = {
         'products': products,
+        'categories': categories,
     }
     
     return render(request, 'shop/home.html', context)
 
+# регистрация: создаёт User + автоматически Profile (через сигнал в models.py),
+# затем сразу логинит пользователя, чтобы не заставлять его входить второй раз
+def register(request):
+    if request.user.is_authenticated:
+        return redirect('home')
+
+    if request.method == 'POST':
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            auth_login(request, user)
+            return redirect('account')
+    else:
+        form = RegisterForm()
+
+    return render(request, 'shop/register.html', {'form': form})
+
+
+# вход через стандартный Django LoginView — он уже умеет показывать ошибки
+# ("неверный логин/пароль"), защищён от CSRF и редиректит после входа.
+# Свой шаблон template_name переопределяет дефолтный регистрационный экран Django
+class CustomLoginView(LoginView):
+    template_name = 'shop/login.html'
+    redirect_authenticated_user = True
+
+    def get_success_url(self):
+        # после входа ведём в личный кабинет, а не на страницу логина
+        return reverse_lazy('account')
+
+
+# выход через стандартный LogoutView — было /admin/logout/ (заглушка из админки),
+# теперь обычный выход с возвратом на главную
+class CustomLogoutView(LogoutView):
+    next_page = reverse_lazy('home')
+
+
+# личный кабинет — здесь будет полноценная реализация (профиль + заказы),
+# пока минимальная версия, чтобы регистрация и вход куда-то вели
+# личный кабинет: блок профиля (редактируется через fetch PATCH /api/me/, см. main.js)
+# и блок "Мои заказы" — рендерится сразу через контекст, без отдельного fetch,
+# чтобы страница показывала данные мгновенно, без дополнительного запроса при загрузке
+@login_required(login_url='/login/')
+def account(request):
+    profile = request.user.profile
+    orders = request.user.orders.prefetch_related('items').all()
+    categories = Category.objects.all()  # для выпадающего списка "любимая категория"
+
+    context = {
+        'profile': profile,
+        'orders': orders,
+        'categories': categories,
+    }
+    return render(request, 'shop/account.html', context)
+
+
+# страница одной заказа — кнопка "Подробнее" в личном кабинете
+@login_required(login_url='/login/')
+def order_detail(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+
+    # тот же принцип, что и в cart_view: чужой заказ открыть нельзя,
+    # кроме случая когда смотрит сам администратор
+    is_admin = request.user.is_superuser or (
+        hasattr(request.user, 'profile') and request.user.profile.role == request.user.profile.ROLE_ADMIN
+    )
+    if order.user != request.user and not is_admin:
+        return redirect('account')
+
+    return render(request, 'shop/order_detail.html', {'order': order})
+
+
 def about(request):
-    return HttpResponse ("""
-  О магазине Green Burn:
-  🌿 Green Burn — флористика и сувениры с душой
-  Мы — минский магазин для тех, кто создаёт красоту. В Green Burn вы найдёте всё для флористики: горшки, кашпо, ленты, пленку, сухоцветы, упаковку и материалы от проверенных брендов. А ещё — тёплые, продуманные сувениры: шкатулки, фоторамки, подсвечники, интерьерные часы и подарки на любой повод.
-✅ Прямые поставки — честные цены
-✅ Доставка по всей Беларуси
-✅ Опт для флористов, студий и бизнеса
-✅ Только качественные и эстетичные товары
-  Большинство наших клиентов возвращаются снова — потому что здесь легко найти то, что вдохновляет.
-🌱 Green Burn — где растёт хорошее настроение.
-    """)
+    return render (request,'shop/about.html' )
 
 def author(request):
-  return HttpResponse ("""
-  Меня зовут Данила Тихонович, и я — создатель Green Burn.
-  Этот магазин родился из любви к живым растениям, уюту и деталям, которые делают подарок по-настоящему личным. Я лично подбираю каждый товар — от флористических материалов до интерьерных сувениров — чтобы вы могли создавать, дарить и украшать с уверенностью и вдохновением.
-  Green Burn — это не просто каталог. Это место, где встречаются красота, качество и забота. Спасибо, что вы с нами!
-  """)
+  return render(request, 'shop/author.html')
 
 # каталог (список товаров)
 def product_list(request):
@@ -56,7 +132,7 @@ def product_list(request):
 
    # Получаем параметры из запроса
    category_id = request.GET.get('category')
-   manufacturer_id = request.GET.get('manufacture')
+   manufacturer_id = request.GET.get('manufacturer')
    search_query = request.GET.get('search', '')
 
   # Фильтр 
@@ -68,13 +144,18 @@ def product_list(request):
 
   #Поиск по названию или описанию (Q-объекты для ИЛИ)
    if search_query:
-      search_query = products.filter(
+      products = products.filter(
          Q(name__icontains=search_query) | 
          Q(description__icontains=search_query)
       )
   # ПОлучаем все категрии и производитеелй для выпадающих спиосков 
    manufacturers = Manufacturer.objects.all()
    categories = Category.objects.all()
+
+   # добавил пагинацию: по 9 товаров на страницу
+   paginator = Paginator(products, 9)
+   page_number = request.GET.get('page')
+   page_obj = paginator.get_page(page_number)
 
    # Контекст для шаблона 
    context = {
@@ -131,6 +212,45 @@ def add_to_cart(request, product_id):
     
     # Перенаправляем на страницу корзины
    return redirect('cart_view')
+
+# новый эндпоинт специально для JS (main.js): принимает JSON, отдаёт JSON,
+# чтобы добавление в корзину можно было делать через fetch без перезагрузки страницы
+@login_required(login_url='/admin/login/')
+@require_POST
+def api_add_to_cart(request):
+    try:
+        data = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'ok': False, 'error': 'Некорректный JSON'}, status=400)
+ 
+    product_id = data.get('product_id')
+    quantity = int(data.get('quantity', 1) or 1)
+ 
+    if not product_id:
+        return JsonResponse({'ok': False, 'error': 'Не указан product_id'}, status=400)
+ 
+    product = get_object_or_404(Product, id=product_id)
+ 
+    if product.quantities_stock <= 0:
+        return JsonResponse({'ok': False, 'error': 'Товара нет в наличии'}, status=400)
+ 
+    cart, created = Cart.objects.get_or_create(user=request.user)
+    cart_item, created = CartItem.objects.get_or_create(
+        cart=cart,
+        product=product,
+        defaults={'quantities': 0}
+    )
+ 
+    # не даём добавить больше, чем есть на складе
+    cart_item.quantities = min(cart_item.quantities + quantity, product.quantities_stock)
+    cart_item.save()
+ 
+    return JsonResponse({
+        'ok': True,
+        'message': f'«{product.name}» добавлен в корзину',
+        'cart_count': cart.items.count(),
+        'item_quantity': cart_item.quantities,
+    })
 
 @login_required(login_url='/admin/login/')
 def update_cart(request, item_id):
@@ -194,7 +314,9 @@ def cart_view(request):
 
 # Оформление заказа
 
-@login_required  # только зареганные пользователи 
+# было @login_required без login_url — при анонимном доступе редиректило на
+# несуществующий /accounts/login/ (404), теперь ведёт на админский логин, как остальные cart-функции
+@login_required(login_url='/admin/login/')
 def checkout(request):
     message = ""
     if request.method == "POST":
@@ -203,7 +325,7 @@ def checkout(request):
         last_name = request.POST.get("last_name", "").strip()
         email = request.POST.get("email", "").strip()
         address = request.POST.get("address", "").strip()
-
+ 
         if not all([first_name, last_name, email, address]):
             message = "Пожалуйста, заполните все поля."
         else:
@@ -212,6 +334,37 @@ def checkout(request):
 
             # дата и время заказа
             order_date = datetime.now()
+
+            # сохраняем заказ в базу — раньше checkout() только генерировал Excel-файл
+            # и ничего не записывал в БД, поэтому "Мои заказы" и /api/orders/ были бы
+            # навсегда пустыми, даже если человек реально оформил покупку
+            cart, _ = Cart.objects.get_or_create(user=request.user)
+            cart_items = list(cart.items.select_related('product').all())
+            total_cost = sum(item.item_cost() for item in cart_items)
+
+            order = Order.objects.create(
+                user=request.user,
+                order_number=str(order_number),
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                address=address,
+                total_cost=total_cost,
+            )
+
+            # OrderItem хранит снимок цены/названия на момент покупки (см. models.py)
+            for item in cart_items:
+                OrderItem.objects.create(
+                    order=order,
+                    product=item.product,
+                    product_name=item.product.name,
+                    price=item.product.price,
+                    quantity=item.quantities,
+                )
+
+            # после оформления заказа корзина очищается — иначе те же товары
+            # остались бы в корзине и человек мог бы "оформить" их повторно
+            cart.items.all().delete()
 
             # создаем Excel файл
             workbook = Workbook()
@@ -237,16 +390,21 @@ def checkout(request):
             workbook.save(filename)
 
             # отправка письма на email из формы
-            send_mail(
-                "Ваш заказ оформлен",
-                f"Спасибо за покупку! Номер вашего заказа: {order_number}",
-                "shop@example.com",  # от кого
-                [email],             # кому
-                fail_silently=False,
-            )
+            # обернул в try/except: если SMTP не настроен (EMAIL_HOST_USER пустой),
+            # раньше вся страница падала с ошибкой вместо показа сообщения об заказе
+            try:
+                send_mail(
+                    "Ваш заказ оформлен",
+                    f"Спасибо за покупку! Номер вашего заказа: {order_number}",
+                    "shop@example.com",  # от кого
+                    [email],             # кому
+                    fail_silently=True,
+                )
+            except Exception:
+                pass
 
             message = f"Заказ {order_number} оформлен! Чек создан."
-
+ 
     return render(request, "shop/checkout.html", {"message": message})
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -259,21 +417,67 @@ class ProductViewSet(viewsets.ModelViewSet):
 #удалить (DELETE)
     queryset = Product.objects.all() #queryset — это данные из базы данных, с которыми будет работать API. То есть получить все данные
     serializer_class = ProductSerializer #Serializer нужен чтобы преобразовать модель → JSON.
+    # было IsAuthenticatedOrReadOnly (из settings) — любой залогиненный покупатель
+    # мог создать/удалить товар. Теперь писать может только роль ADMIN
+    permission_classes = [IsAdminRoleOrReadOnly]
 
 #Создай API для модели Product, бери данные из базы, используй ProductSerializer для JSON.
 
 class ManufacturerViewSet(viewsets.ModelViewSet):
     queryset = Manufacturer.objects.all()
     serializer_class =  ManufacturerSerializer
+    permission_classes = [IsAdminRoleOrReadOnly]  # тот же принцип: каталог производителей читают все, меняет только админ
 
 class CartViewSet(viewsets.ModelViewSet):
-    queryset=Cart.objects.all()
     serializer_class = CartSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    # было queryset = Cart.objects.all() — любой залогиненный пользователь видел
+    # ЧУЖИЕ корзины через /api/carts/. Теперь возвращаем только корзину текущего юзера
+    def get_queryset(self):
+        if self.request.user.is_superuser:
+            return Cart.objects.all()
+        return Cart.objects.filter(user=self.request.user)
 
 class CartItemViewSet(viewsets.ModelViewSet):
-    queryset = CartItem.objects.all()
     serializer_class = CartItemSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    # та же проблема, что и в CartViewSet — ограничиваем элементы корзины владельцем
+    def get_queryset(self):
+        if self.request.user.is_superuser:
+            return CartItem.objects.all()
+        return CartItem.objects.filter(cart__user=self.request.user)
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset =  Category.objects.all()
     serializer_class = CategorySerializer
+    permission_classes = [IsAdminRoleOrReadOnly]  # категории тоже редактирует только админ
+
+
+# заказы: GET /api/orders/ — пользователь видит только свои, администратор — все.
+# создавать новый заказ через этот ViewSet не нужно (заказ создаётся через
+# обычный checkout()), поэтому здесь нет отдельного permission на запись —
+# хватает обычного IsAuthenticated, а видимость отдаёт get_queryset
+class OrderViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser or (hasattr(user, 'profile') and user.profile.role == user.profile.ROLE_ADMIN):
+            return Order.objects.all()
+        return Order.objects.filter(user=user)
+
+
+# GET /api/me/ — профиль текущего пользователя, PATCH /api/me/ — его редактирование.
+# RetrieveUpdateAPIView сразу даёт оба метода без лишнего кода
+class MeView(generics.RetrieveUpdateAPIView):
+    serializer_class = ProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ['get', 'patch', 'head', 'options']  # PUT не нужен — профиль редактируется частично
+
+    def get_object(self):
+        # объект всегда профиль самого запрашивающего — get_object_or_404 по id не нужен,
+        # иначе можно было бы передать чужой id в URL и читать/менять чужой профиль
+        return self.request.user.profile

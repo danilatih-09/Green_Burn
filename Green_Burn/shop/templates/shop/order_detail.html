@@ -1,0 +1,69 @@
+{% extends 'shop/base.html' %}
+{% block title %}Заказ №{{ order.order_number }} | GREEN Burn{% endblock %}
+
+{% block content %}
+
+<nav class="breadcrumbs" aria-label="breadcrumb">
+    <a href="{% url 'home' %}">Главная</a>
+    <span>›</span>
+    <a href="{% url 'account' %}">Личный кабинет</a>
+    <span>›</span>
+    <span class="current">Заказ №{{ order.order_number }}</span>
+</nav>
+
+<div class="checkout-box" style="max-width: 700px;">
+    <h1>Заказ №{{ order.order_number }}</h1>
+
+    <div class="product-specs">
+        <div class="spec-row">
+            <span>Дата заказа</span>
+            <span>{{ order.created_at|date:"d.m.Y H:i" }}</span>
+        </div>
+        <div class="spec-row">
+            <span>Статус</span>
+            <span class="order-status order-status-{{ order.status|lower }}">{{ order.get_status_display }}</span>
+        </div>
+        <div class="spec-row">
+            <span>Покупатель</span>
+            <span>{{ order.first_name }} {{ order.last_name }}</span>
+        </div>
+        <div class="spec-row">
+            <span>Email</span>
+            <span>{{ order.email }}</span>
+        </div>
+        <div class="spec-row">
+            <span>Адрес доставки</span>
+            <span>{{ order.address }}</span>
+        </div>
+    </div>
+
+    <table class="cart-table">
+        <thead>
+            <tr>
+                <th>Товар</th>
+                <th>Цена</th>
+                <th>Кол-во</th>
+                <th>Сумма</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order.items.all %}
+            <tr>
+                <td>{{ item.product_name }}</td>
+                <td>{{ item.price }} BYN</td>
+                <td>{{ item.quantity }}</td>
+                <td class="cart-item-total">{{ item.item_cost }} BYN</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="summary-row total" style="margin-top: 24px;">
+        <span>Итого</span>
+        <span>{{ order.total_cost }} BYN</span>
+    </div>
+
+    <a href="{% url 'account' %}" class="continue-shopping">← Назад в личный кабинет</a>
+</div>
+
+{% endblock %}

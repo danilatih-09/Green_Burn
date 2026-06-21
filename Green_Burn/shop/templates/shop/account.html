@@ -1,0 +1,108 @@
+{% extends 'shop/base.html' %}
+{% block title %}Личный кабинет | GREEN Burn{% endblock %}
+
+{% block content %}
+
+<h1 class="page-title">Личный кабинет</h1>
+
+<div class="account-layout">
+
+    <!-- роль показывается визуально бейджем рядом с именем пользователя -->
+    <div class="account-header">
+        <div>
+            <div class="account-username">{{ user.username }}</div>
+            <div class="account-email">{{ user.email }}</div>
+        </div>
+        <span class="role-badge role-{{ profile.role|lower }}">{{ profile.get_role_display }}</span>
+    </div>
+
+    <section class="account-section">
+        <h2>Профиль</h2>
+
+        <!-- id="profile-form" — main.js слушает submit и отправляет PATCH /api/me/ через fetch,
+             вместо обычной перезагрузки страницы -->
+        <form id="profile-form" class="account-form">
+            {% csrf_token %}
+
+            <div class="form-row">
+                <label for="full_name">Полное имя</label>
+                <input type="text" id="full_name" name="full_name" value="{{ profile.full_name }}">
+            </div>
+
+            <div class="form-row">
+                <label for="phone">Телефон</label>
+                <input type="text" id="phone" name="phone" value="{{ profile.phone }}">
+            </div>
+
+            <div class="form-row">
+                <label for="address">Адрес доставки</label>
+                <input type="text" id="address" name="address" value="{{ profile.address }}">
+            </div>
+
+            <div class="form-row">
+                <label for="delivery_city">Город доставки</label>
+                <input type="text" id="delivery_city" name="delivery_city" value="{{ profile.delivery_city }}">
+            </div>
+
+            <div class="form-row">
+                <label for="favorite_category">Любимая категория</label>
+                <select id="favorite_category" name="favorite_category">
+                    <option value="">Не выбрано</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if profile.favorite_category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn">Сохранить изменения</button>
+            <span id="profile-save-status"></span>
+        </form>
+    </section>
+
+    <section class="account-section">
+        <h2>Мои заказы</h2>
+
+        {% if orders %}
+        <table class="cart-table">
+            <thead>
+                <tr>
+                    <th>Номер</th>
+                    <th>Дата</th>
+                    <th>Сумма</th>
+                    <th>Статус</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>№{{ order.order_number }}</td>
+                    <td>{{ order.created_at|date:"d.m.Y H:i" }}</td>
+                    <td class="cart-item-total">{{ order.total_cost }} BYN</td>
+                    <td><span class="order-status order-status-{{ order.status|lower }}">{{ order.get_status_display }}</span></td>
+                    <td><a href="{% url 'order_detail' order.pk %}" class="btn btn-outline btn-sm">Подробнее</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">У вас пока нет заказов</div>
+        {% endif %}
+    </section>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // навешиваем обработчик сохранения профиля именно здесь (а не в общем main.js),
+    // потому что форма #profile-form есть только на этой странице
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('profile-form');
+        if (form) {
+            form.addEventListener('submit', handleProfileFormSubmit);
+        }
+    });
+</script>
+{% endblock %}

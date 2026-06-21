@@ -5,143 +5,11 @@
 
 {% block content %}
 
-<style>
-
-.hero {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 60px 0 40px 0;
-    min-height: 70vh;
-    margin: 0;
-}
-
-.hero-content {
-    max-width: 600px;
-}
-
-.hero-title {
-    font-size: 64px;
-    font-weight: 900;
-    margin-bottom: 20px;
-}
-
-.hero-subtitle {
-    font-size: 20px;
-    color: var(--text-secondary);
-    margin-bottom: 40px;
-}
-
-.hero-image-wrapper {
-    width: 50%;
-    display: flex;
-    justify-content: center;
-}
-
-.hero-image {
-    width: 75%;
-    max-height: 500px;
-    object-fit: contain;
-    border-radius: 25px;
-    mix-blend-mode: screen;
-    filter: drop-shadow(0 0 25px rgba(254, 255, 252, 0.949));
-}
-
-.text {
-    margin: 40px 0 30px 0;
-    text-align: center;
-    font-size: 53px;
-    font-weight: 900;
-    padding: 30px 0;
-}
-
-
-.features {
-    padding: 60px 0;
-    margin: 30px 0;
-}
-
-.features-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 30px;
-}
-
-.feature-card {
-    text-align: center;
-    background: var(--bg-secondary);
-    padding: 40px 30px;
-    border-radius: 20px;
-    transition: 0.3s ease;
-    border: 1px solid transparent;
-}
-
-.feature-card h3 {
-    margin-bottom: 15px;
-    font-size: 18px;
-}
-
-.feature-card p {
-    color: var(--text-secondary);
-    font-size: 14px;
-}
-
-.feature-card:hover {
-    border-color: var(--accent);
-    transform: translateY(-5px);
-}
-
-.about-store {
-    padding: 80px 0;
-    text-align: center;
-    margin: 30px 0;
-}
-
-.about-store h2 {
-    font-size: 36px;
-    margin-bottom: 20px;
-}
-
-.about-store p {
-    max-width: 600px;
-    margin: 0 auto 40px auto;
-    color: var(--text-secondary);
-}
-
-@media (max-width: 1100px) {
-    .hero {
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .hero-image-wrapper {
-        width: 100%;
-        margin-top: 40px;
-    }
-
-    .features-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 700px) {
-    .features-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .hero-title {
-        font-size: 42px;
-    }
-}
-
-</style>
-
-
 <section class="hero">
     <div class="hero-content">
         <h1 class="hero-title">GREEN Burn</h1>
         <p class="hero-subtitle">
-            Цветы, которые создают эмоции и запоминаются надолго
+            Цветы, декор и товары для сада, которые создают эмоции и запоминаются надолго
         </p>
         <a href="{% url 'product_list' %}" class="btn">
             Перейти в каталог
@@ -155,9 +23,46 @@
     </div>
 </section>
 
-<p class="text"> Assortment </p>
+<!-- плитки категорий: небольшие прямоугольники с картинкой, названием и стикером,
+     клик по плитке сразу открывает каталог с фильтром по этой категории -->
+<p class="section-title">Категории</p>
 
+<div class="category-grid">
+    {% for category in categories %}
+    <a href="{% url 'product_list' %}?category={{ category.id }}"
+       class="category-tile"
+       {% with first_product=category.products.first %}
+       {% if first_product and first_product.photo %}style="background-image: url('{{ first_product.photo.url }}')"{% endif %}
+       {% endwith %}>
+        <span class="category-tile-sticker">Каталог</span>
+        <span class="category-tile-name">{{ category.name }}</span>
+    </a>
+    {% endfor %}
+</div>
 
+<p class="section-title">Популярное</p>
+
+<div class="product-grid">
+    {% for product in products %}
+    <div class="product-card">
+        {% if product.photo %}
+        <img src="{{ product.photo.url }}" class="product-image" alt="{{ product.name }}">
+        {% else %}
+        <div class="product-image"></div>
+        {% endif %}
+
+        <div class="product-info">
+            <div class="product-name">{{ product.name }}</div>
+            <div class="product-price">{{ product.price }} BYN</div>
+            <div class="product-actions">
+                <a href="{% url 'product_detail' product.pk %}" class="btn btn-outline btn-sm">Подробнее</a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">Товары пока не добавлены</div>
+    {% endfor %}
+</div>
 
 <section class="features">
     <div class="features-grid">
@@ -189,11 +94,11 @@
 <section class="about-store">
     <h2>О магазине</h2>
     <p>
-        GREEN Burn — современный цветочный бренд,
-        создающий стильные композиции и букеты
+        GREEN Burn — современный магазин,
+        предлагающий товары для сада, флористики и декора
         для особенных моментов вашей жизни.
     </p>
-    <a href="about/" class="btn">
+    <a href="{% url 'about' %}" class="btn">
         Подробнее о нас
     </a>
 </section>

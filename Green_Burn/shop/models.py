@@ -1,6 +1,9 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
 
 # Создания класса КАТЕГОРИЯ
 class Category (models.Model):
@@ -101,4 +104,105 @@ class CartItem(models.Model):
     class Meta:
         verbose_name = "Элемент корзины"
         verbose_name_plural = "Элементы корзины"
-        
+
+# ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ
+# выбран вариант с полем role (а не is_staff/is_superuser и не Groups),
+# потому что для личного кабинета нужно явно показывать роль на странице,
+# а с Groups это сделать сложнее без доп. кода
+class Profile(models.Model):
+    ROLE_CUSTOMER = 'CUSTOMER'
+    ROLE_ADMIN = 'ADMIN'
+    ROLE_MANAGER = 'MANAGER'
+
+    ROLE_CHOICES = [
+        (ROLE_CUSTOMER, 'Покупатель'),
+        (ROLE_ADMIN, 'Администратор'),
+        (ROLE_MANAGER, 'Менеджер'),
+    ]
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile', verbose_name="Пользователь")
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_CUSTOMER, verbose_name="Роль")
+
+    full_name = models.CharField(max_length=150, blank=True, verbose_name="Полное имя")
+    phone = models.CharField(max_length=30, blank=True, verbose_name="Телефон")
+    address = models.CharField(max_length=255, blank=True, verbose_name="Адрес доставки")
+
+    # 2 поля под тематику магазина (флористика/декор) — индивидуальное задание
+    favorite_category = models.ForeignKey(
+        Category, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='fans', verbose_name="Любимая категория"
+    )
+    delivery_city = models.CharField(max_length=100, blank=True, verbose_name="Город доставки")
+
+    def __str__(self):
+        return f"Профиль {self.user.username} ({self.get_role_display()})"
+
+    class Meta:
+        verbose_name = "Профиль"
+        verbose_name_plural = "Профили"
+
+
+# при создании нового User Django сам вызовет этот сигнал и создаст Profile —
+# без этого пришлось бы создавать профиль вручную в каждом view регистрации
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+
+
+# ЗАКАЗ
+# раньше заказов в базе не было вообще: checkout() только генерировал Excel-файл
+# и ничего не сохранял. Без модели Order нечего было бы показывать в "Моих заказах"
+# и нечего возвращать в /api/orders/, поэтому модель добавлена с нуля
+class Order(models.Model):
+    STATUS_NEW = 'NEW'
+    STATUS_PROCESSING = 'PROCESSING'
+    STATUS_DONE = 'DONE'
+    STATUS_CANCELLED = 'CANCELLED'
+
+    STATUS_CHOICES = [
+        (STATUS_NEW, 'Новый'),
+        (STATUS_PROCESSING, 'В обработке'),
+        (STATUS_DONE, 'Выполнен'),
+        (STATUS_CANCELLED, 'Отменён'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders', verbose_name="Пользователь")
+    order_number = models.CharField(max_length=20, unique=True, verbose_name="Номер заказа")
+
+    first_name = models.CharField(max_length=100, verbose_name="Имя")
+    last_name = models.CharField(max_length=100, verbose_name="Фамилия")
+    email = models.EmailField(verbose_name="Email")
+    address = models.CharField(max_length=255, verbose_name="Адрес доставки")
+
+    total_cost = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Сумма заказа")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_NEW, verbose_name="Статус")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата заказа")
+
+    def __str__(self):
+        return f"Заказ {self.order_number} ({self.user.username})"
+
+    class Meta:
+        verbose_name = "Заказ"
+        verbose_name_plural = "Заказы"
+        ordering = ['-created_at']
+
+
+class OrderItem(models.Model):
+    # снимок состава заказа на момент покупки — если потом товар удалят
+    # или поменяют цену, в старом заказе всё равно останутся правильные данные
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items', verbose_name="Заказ")
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, verbose_name="Товар")
+    product_name = models.CharField(max_length=200, verbose_name="Название товара")
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Цена на момент покупки")
+    quantity = models.PositiveIntegerField(verbose_name="Количество")
+
+    def __str__(self):
+        return f"{self.product_name} x{self.quantity}"
+
+    def item_cost(self):
+        return self.price * self.quantity
+
+    class Meta:
+        verbose_name = "Позиция заказа"
+        verbose_name_plural = "Позиции заказа"

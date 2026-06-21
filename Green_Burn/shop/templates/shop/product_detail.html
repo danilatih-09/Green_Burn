@@ -3,113 +3,20 @@
 
 {% block content %}
 
-<style>
-.back-link {
-    display: inline-block;
-    margin-bottom: 40px;
-    color: var(--accent);
-    text-decoration: none;
-    transition: 0.3s;
-}
-
-.back-link:hover {
-    text-shadow: 0 0 10px var(--accent);
-}
-
-.product-detail {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 80px;
-    background: var(--bg-secondary);
-    padding: 80px;
-    border-radius: 36px;
-    box-shadow: 0 40px 100px rgba(0,0,0,0.6);
-}
-
-.product-image-section {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #111;
-    border-radius: 28px;
-    padding: 40px;
-}
-
-.product-image-large {
-    max-width: 100%;
-    border-radius: 20px;
-}
-
-.product-info-section {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.product-category {
-    font-size: 12px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--text-secondary);
-    margin-bottom: 20px;
-}
-
-.product-title {
-    font-size: 56px;
-    font-weight: 900;
-    margin-bottom: 30px;
-}
-
-.product-price-large {
-    font-size: 40px;
-    color: var(--accent);
-    margin-bottom: 30px;
-}
-
-.product-description {
-    color: var(--text-secondary);
-    line-height: 1.8;
-    margin-bottom: 40px;
-}
-
-.product-specs {
-    background: #111;
-    padding: 30px;
-    border-radius: 20px;
-    margin-bottom: 40px;
-}
-
-.spec-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 15px;
-    color: var(--text-secondary);
-}
-
-.spec-row span:last-child {
-    color: var(--text-main);
-}
-
-.product-actions-large .btn {
-    padding: 18px 40px;
-    font-size: 16px;
-}
-
-@media (max-width: 1100px) {
-    .product-detail {
-        grid-template-columns: 1fr;
-        padding: 40px;
-    }
-}
-</style>
-
-<a href="{% url 'product_list' %}" class="back-link">← Назад к каталогу</a>
+<!-- хлебные крошки: Главная > Каталог > Название товара -->
+<nav class="breadcrumbs" aria-label="breadcrumb">
+    <a href="{% url 'home' %}">Главная</a>
+    <span>›</span>
+    <a href="{% url 'product_list' %}">Каталог</a>
+    <span>›</span>
+    <span class="current">{{ product.name }}</span>
+</nav>
 
 <div class="product-detail">
 
     <div class="product-image-section">
         {% if product.photo %}
-            <img src="{{ product.photo.url }}" class="product-image-large">
+            <img src="{{ product.photo.url }}" class="product-image-large" alt="{{ product.name }}">
         {% else %}
             <div style="height:400px;"></div>
         {% endif %}
@@ -139,14 +46,25 @@
             </div>
             <div class="spec-row">
                 <span>На складе</span>
+                {% if product.quantities_stock > 0 %}
                 <span>{{ product.quantities_stock }} шт.</span>
+                {% else %}
+                <span class="stock-out">Нет в наличии</span>
+                {% endif %}
             </div>
         </div>
 
         <div class="product-actions-large">
-            <a href="{% url 'add_to_cart' product.id %}" class="btn">
+            <!-- если товара нет на складе — кнопка неактивна и подписана "Нет в наличии" -->
+            {% if product.quantities_stock > 0 %}
+            <button type="button" class="btn" onclick="addToCart({{ product.id }})">
                 Добавить в корзину
-            </a>
+            </button>
+            {% else %}
+            <button type="button" class="btn disabled" disabled>
+                Нет в наличии
+            </button>
+            {% endif %}
         </div>
     </div>
 

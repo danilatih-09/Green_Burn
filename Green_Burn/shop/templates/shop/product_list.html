@@ -3,124 +3,93 @@
 
 {% block content %}
 
-<style>
-.page-header {
-    text-align: center;
-    margin-bottom: 80px;
-}
-
-.page-header h1 {
-    font-size: 60px;
-    font-weight: 900;
-}
-
-.filters {
-    margin-bottom: 60px;
-}
-
-.filters form {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-}
-
-.filter-group select,
-.filter-group input {
-    padding: 14px 18px;
-    background: var(--bg-secondary);
-    border: 1px solid #222;
-    color: var(--text-main);
-    border-radius: 12px;
-}
-
-.product-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 40px;
-}
-
-.product-card {
-    background: var(--bg-secondary);
-    border-radius: 24px;
-    overflow: hidden;
-    transition: 0.4s;
-}
-
-.product-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-}
-
-.product-image {
-    height: 320px;
-    object-fit: contain;
-    background: #111;
-}
-
-.product-info {
-    padding: 30px;
-}
-
-.product-name {
-    font-size: 20px;
-    margin-bottom: 12px;
-}
-
-.product-price {
-    font-size: 22px;
-    color: var(--accent);
-    margin-bottom: 20px;
-}
-
-.product-actions {
-    display: flex;
-    gap: 10px;
-}
-</style>
-
 <div class="page-header">
-    <h1>Каталог</h1>
 </div>
 
-<div class="filters">
-    <form method="get">
-        <div class="filter-group">
-            <select name="category">
-                <option value="">Все категории</option>
-                {% for cat in categories %}
-                <option value="{{ cat.id }}">{{ cat.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
+<div class="catalog-layout">
 
-        <div class="filter-group">
-            <input type="text" name="search" placeholder="Поиск...">
-        </div>
+    <aside class="filters-sidebar">
+        <h3>Фильтры</h3>
+        <form method="get">
 
-        <button class="btn">Применить</button>
-    </form>
-</div>
+            <div class="filter-group">
+                <label for="filter-category">Категория</label>
+                <select id="filter-category" name="category">
+                    <option value="">Все категории</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if selected_categories == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-<div class="product-grid">
-    {% for product in products %}
-    <div class="product-card">
-        {% if product.photo %}
-        <img src="{{ product.photo.url }}" class="product-image">
-        {% else %}
-        <div class="product-image"></div>
-        {% endif %}
+            <div class="filter-group">
+                <label for="filter-manufacturer">Производитель</label>
+                <select id="filter-manufacturer" name="manufacturer">
+                    <option value="">Все производители</option>
+                    {% for man in manufacturers %}
+                    <option value="{{ man.id }}" {% if selected_manufacturers == man.id|stringformat:"s" %}selected{% endif %}>{{ man.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-        <div class="product-info">
-            <div class="product-name">{{ product.name }}</div>
-            <div class="product-price">{{ product.price }} BYN</div>
+            <div class="filter-group">
+                <label for="filter-search">Поиск</label>
+                <input type="text" id="filter-search" name="search" placeholder="Название товара..." value="{{ search_query }}">
+            </div>
 
-            <div class="product-actions">
-                <a href="{% url 'product_detail' product.pk %}" class="btn btn-outline">Подробнее</a>
-                <a href="{% url 'add_to_cart' product.id %}" class="btn">В корзину</a>
+            <button type="submit" class="btn">Применить фильтры</button>
+        </form>
+    </aside>
+
+    <div class="product-grid">
+        {% for product in products %}
+        <div class="product-card">
+            {% if product.photo %}
+            <img src="{{ product.photo.url }}" class="product-image" alt="{{ product.name }}">
+            {% else %}
+            <div class="product-image"></div>
+            {% endif %}
+
+            <div class="product-info">
+                <div class="product-name">{{ product.name }}</div>
+                <div class="product-price">{{ product.price }} BYN</div>
+
+                <div class="product-actions">
+                    <a href="{% url 'product_detail' product.pk %}" class="btn btn-outline">Подробнее</a>
+                    {% if product.quantities_stock > 0 %}
+                    <button type="button" class="btn" onclick="addToCart({{ product.id }})">В корзину</button>
+                    {% else %}
+                    <button type="button" class="btn disabled" disabled>Нет в наличии</button>
+                    {% endif %}
+                </div>
             </div>
         </div>
+        {% empty %}
+        <div class="empty-state">По выбранным фильтрам товары не найдены</div>
+        {% endfor %}
+
+        <!-- пагинация: по 9 товаров на страницу, сохраняем параметры фильтров при переходе по страницам -->
+        {% if page_obj.paginator.num_pages > 1 %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if selected_categories %}&category={{ selected_categories }}{% endif %}{% if selected_manufacturers %}&manufacturer={{ selected_manufacturers }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">‹</a>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if num == page_obj.number %}
+                    <span class="current">{{ num }}</span>
+                {% else %}
+                    <a href="?page={{ num }}{% if selected_categories %}&category={{ selected_categories }}{% endif %}{% if selected_manufacturers %}&manufacturer={{ selected_manufacturers }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if selected_categories %}&category={{ selected_categories }}{% endif %}{% if selected_manufacturers %}&manufacturer={{ selected_manufacturers }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">›</a>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
-    {% endfor %}
+
 </div>
 
 {% endblock %}

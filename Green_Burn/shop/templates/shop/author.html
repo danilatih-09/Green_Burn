@@ -1,0 +1,70 @@
+{% extends 'shop/base.html' %}
+{% block title %}Об авторе | GREEN Burn{% endblock %}
+
+{% block content %}
+<style>
+.author-contacts {
+    margin-top: 50px;
+    text-align: center; /* Центрирует текст и содержимое */
+}
+
+.author-contacts h3 {
+    margin-bottom: 20px;
+}
+
+.social-links {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+}
+
+.social-links img {
+    width: 42px;
+    height: 42px;
+    transition: 0.3s;
+}
+
+.social-links img:hover {
+    transform: scale(1.15);
+}
+</style>
+
+<div class="simple-page">
+    <h1>Об авторе</h1>
+
+    <p>Меня зовут Данила Тихонович, и я — создатель Green Burn.</p>
+
+    <p>
+        Этот магазин родился из любви к живым растениям, уюту и деталям, которые
+        делают подарок по-настоящему личным. Я лично подбираю каждый товар — от
+        флористических материалов до интерьерных сувениров — чтобы вы могли
+        создавать, дарить и украшать с уверенностью и вдохновением.
+    </p>
+
+    <p>
+        Green Burn — это не просто каталог. Это место, где встречаются красота,
+        качество и забота. Спасибо, что вы с нами!
+    </p>
+</div>
+<div class="author-contacts">
+    <h3>Связаться со мной</h3>
+
+    <div class="social-links">
+        <a href="" target="_blank">
+            <img src="https://img.icons8.com/fluency/48/mail.png" alt="Почта">
+        </a>
+
+        <a href="https://t.me/danniiqwk" target="_blank">
+            <img src="https://img.icons8.com/color/48/telegram-app--v1.png" alt="Telegram">
+        </a>
+
+        <a href="https://www.instagram.com/daniiqwk?igsh=ZjM3dGZsdmRzcnlz&utm_source=qr" target="_blank">
+            <img src="https://img.icons8.com/fluency/48/instagram-new.png" alt="Instagram">
+        </a>
+
+        <a href="https://github.com/danilatih-09" target="_blank">
+            <img src="https://img.icons8.com/fluency/48/github.png" alt="GitHub">
+        </a>
+    </div>
+</div>
+{% endblock %}

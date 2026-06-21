@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-m6z3wckhi%#ypf=@7pb-#mn3_%+88b^l&a5gu$kxy60h^ni5n(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'testserver']
 
 
 # Application definition
@@ -52,6 +52,12 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'Green_Burn.urls'
+
+# было не задано — Django по умолчанию подставляет /accounts/login/, которого
+# в проекте нет (получили бы 404 в любом месте, где забыли явный login_url=...)
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/account/'
+LOGOUT_REDIRECT_URL = '/'
 
 TEMPLATES = [
     {
@@ -144,6 +150,6 @@ REST_FRAMEWORK = {
     ],
 
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ]
 }
