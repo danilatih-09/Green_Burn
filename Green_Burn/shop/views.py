@@ -245,7 +245,7 @@ def product_detail(request, pk):
     return render(request, 'shop/product_detail.html', context)  
 
 #ограничения доступа к корзине.
-@login_required(login_url='/admin/login/')
+@login_required(login_url='/login/')
 def add_to_cart(request, product_id):
    #  Добавление товара в корзину 
    product = get_object_or_404(Product, id = product_id)
@@ -277,7 +277,7 @@ def add_to_cart(request, product_id):
 
 # новый эндпоинт специально для JS (main.js): принимает JSON, отдаёт JSON,
 # чтобы добавление в корзину можно было делать через fetch без перезагрузки страницы
-@login_required(login_url='/admin/login/')
+@login_required(login_url='/login/')
 @require_POST
 def api_add_to_cart(request):
     try:
@@ -314,7 +314,7 @@ def api_add_to_cart(request):
         'item_quantity': cart_item.quantities,
     })
 
-@login_required(login_url='/admin/login/')
+@login_required(login_url='/login/')
 def update_cart(request, item_id):
     """Обновление количества товара в корзине"""
     cart_item = get_object_or_404(CartItem, id = item_id)
@@ -340,7 +340,7 @@ def update_cart(request, item_id):
     
     return redirect('cart_view')
 
-@login_required(login_url='/admin/login/')
+@login_required(login_url='/login/')
 def remove_from_cart(request, item_id):
     # удаление их корзины 
     cart_item = get_object_or_404(CartItem, id=item_id)
@@ -353,7 +353,7 @@ def remove_from_cart(request, item_id):
     
     return redirect('cart_view')
 
-@login_required(login_url='/admin/login/')
+@login_required(login_url='/login/')
 def cart_view(request):
     """Просмотр корзины пользователя"""
     # Получаем корзину пользователя
@@ -378,7 +378,7 @@ def cart_view(request):
 
 # было @login_required без login_url — при анонимном доступе редиректило на
 # несуществующий /accounts/login/ (404), теперь ведёт на админский логин, как остальные cart-функции
-@login_required(login_url='/admin/login/')
+@login_required(login_url='/login/')
 def checkout(request):
     message = ""
     order_number = None  # если заказ успешно оформлен, сюда попадёт его номер —
