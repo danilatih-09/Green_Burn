@@ -149,7 +149,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
-    BASE_DIR / "static", 
+    BASE_DIR / "shop" / "static",
 ]
 # WhiteNoise сжимает и кэширует статику в продакшне —
 # без этого CSS/JS не будут раздаваться Railway
