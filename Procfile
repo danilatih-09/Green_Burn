@@ -1,1 +1,1 @@
-web: gunicorn Green_Burn.wsgi --chdir Green_Burn
+web: cd Green_Burn && python manage.py collectstatic --noinput && gunicorn Green_Burn.wsgi
