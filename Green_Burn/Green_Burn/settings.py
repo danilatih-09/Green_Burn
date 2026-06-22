@@ -156,12 +156,19 @@ STATICFILES_DIRS = [
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # для отправки по EMAIL
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# на Railway SMTP заблокирован — используем консольный бэкенд (письма пишутся в логи),
+# для реальной отправки нужен сторонний сервис (SendGrid, Mailgun и т.д.)
+if os.environ.get('RAILWAY_ENVIRONMENT'):
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'        # SMTP-сервер Gmail
-EMAIL_PORT = 587                     # Порт для TLS
-EMAIL_USE_TLS = True                 # Используем шифрование
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+EMAIL_PORT = 465
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True
 
 #Аунтентификация
 REST_FRAMEWORK = {
