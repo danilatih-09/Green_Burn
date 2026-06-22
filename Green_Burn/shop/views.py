@@ -1,14 +1,16 @@
 from  django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import login as auth_login
+from django.contrib.auth import login as auth_login, update_session_auth_hash
 from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth.forms import PasswordChangeForm
 from django.urls import reverse_lazy
 from django.db.models import Q
+from django.conf import settings
 from django.core.paginator import Paginator
 from django.views.decorators.http import require_POST
 from .models import Product, Category, Manufacturer, Cart, CartItem, Order, OrderItem
-from .forms import RegisterForm
+from .forms import RegisterForm, EmailChangeForm
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from django.core.mail import send_mail 
@@ -30,6 +32,26 @@ from .serializers import (
 from .permissions import IsAdminRoleOrReadOnly
 
 
+# сопоставление "название категории -> файл картинки" для плиток на главной.
+# привязка по id ненадёжна (id в БД зависит от порядка создания в populate.py
+# и не совпадает с тем, как пронумерованы файлы 1-12 в static/images),
+# поэтому сопоставляем по названию категории, которое стабильно
+CATEGORY_IMAGE_MAP = {
+    "Искусственные цветы": "1.jpg",
+    "Вазы и кашпо": "2.jpg",
+    "Сувениры и декор": "3.jpg",
+    "Горшки для цветов": "4.jpg",
+    "Изделия из дерева": "5.jpg",
+    "Корзины плетёные": "6.jpg",
+    "Удобрение и бытовая химия": "7.jpg",
+    "Товары для дома": "8.jpg",
+    "Упаковка для цветов": "9.jpg",
+    "Флористические материалы": "10.jpg",
+    "Барбекю/Кемпинг": "11.jpg",
+    "Спортивные товары": "12.png",
+}
+
+
 @ensure_csrf_cookie  # гарантирует cookie csrftoken с первого визита на сайт —
 # без этого декоратора cookie появлялся только "случайно", если на странице
 # рендерилась хотя бы одна форма с {% csrf_token %} (например форма логаута в base.html
@@ -37,9 +59,14 @@ from .permissions import IsAdminRoleOrReadOnly
 # не появиться вообще, и fetch с каталога не находил бы токен через getCsrfToken()
 def home(request):
     """Главная страница"""
-    products = Product.objects.all()[:6]  # Показываем первые 6 товаров
+    products = Product.objects.all()[:4]  # Показываем первые 6 товаров
     # добавил категории в контекст, чтобы на главной можно было вывести плитки категорий
-    categories = Category.objects.all()
+    categories = list(Category.objects.all())
+
+    # подмешиваем каждой категории имя файла картинки (по названию),
+    # чтобы в шаблоне просто писать {{ category.image_filename }}
+    for category in categories:
+        category.image_filename = CATEGORY_IMAGE_MAP.get(category.name)
 
     context = {
         'products': products,
@@ -102,6 +129,41 @@ def account(request):
     }
     return render(request, 'shop/account.html', context)
 
+# страница "Настройки": две независимые формы на одной странице —
+# смена пароля и смена email. У каждой формы своё скрытое поле-маркер
+# в HTML (name="change_password" / name="change_email" у кнопки submit),
+# по нему view понимает, какую именно форму отправили.
+@login_required(login_url='/login/')
+def account_settings(request):
+    # пустые формы для обычного открытия страницы (GET-запрос)
+    password_form = PasswordChangeForm(user=request.user)
+    email_form = EmailChangeForm(user=request.user, initial={'email': request.user.email})
+
+    if request.method == 'POST':
+        # 'change_password' in request.POST — сработает, если в отправленных
+        # данных есть кнопка с name="change_password", то есть нажали
+        # именно кнопку "Сохранить пароль"
+        if 'change_password' in request.POST:
+            password_form = PasswordChangeForm(user=request.user, data=request.POST)
+            if password_form.is_valid():
+                user = password_form.save()  # тут пароль реально меняется в базе
+                # обновляем сессию новым хэшем пароля, чтобы не выкинуло из аккаунта
+                update_session_auth_hash(request, user)
+                # редирект после успешного POST (Post/Redirect/Get),
+                # чтобы при обновлении страницы форма не отправлялась повторно
+                return redirect('account_settings')
+
+        elif 'change_email' in request.POST:
+            email_form = EmailChangeForm(user=request.user, data=request.POST)
+            if email_form.is_valid():
+                email_form.save()
+                return redirect('account_settings')
+
+    context = {
+        'password_form': password_form,
+        'email_form': email_form,
+    }
+    return render(request, 'shop/settings.html', context)
 
 # страница одной заказа — кнопка "Подробнее" в личном кабинете
 @login_required(login_url='/login/')
@@ -319,6 +381,8 @@ def cart_view(request):
 @login_required(login_url='/admin/login/')
 def checkout(request):
     message = ""
+    order_number = None  # если заказ успешно оформлен, сюда попадёт его номер —
+    # по этому флагу шаблон решает, показывать форму или экран "Заказ оформлен"
     if request.method == "POST":
         # Берем данные из формы
         first_name = request.POST.get("first_name", "").strip()
@@ -396,7 +460,7 @@ def checkout(request):
                 send_mail(
                     "Ваш заказ оформлен",
                     f"Спасибо за покупку! Номер вашего заказа: {order_number}",
-                    "shop@example.com",  # от кого
+                    settings.EMAIL_HOST_USER,  # от кого
                     [email],             # кому
                     fail_silently=True,
                 )
@@ -405,7 +469,7 @@ def checkout(request):
 
             message = f"Заказ {order_number} оформлен! Чек создан."
  
-    return render(request, "shop/checkout.html", {"message": message})
+    return render(request, "shop/checkout.html", {"message": message, "order_number": order_number})
 
 class ProductViewSet(viewsets.ModelViewSet):
  #ViewSet в Django REST Framework — это класс, который создаёт API для модели.

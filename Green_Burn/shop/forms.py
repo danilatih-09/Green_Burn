@@ -34,3 +34,33 @@ class RegisterForm(UserCreationForm):
             profile.save()
 
         return user
+    
+# Форма смены email на странице "Настройки".
+# Django сам по себе не даёт готовую форму для смены email (только для пароля),
+# поэтому делаем свою — она наследуется от обычной forms.Form, а не от ModelForm,
+# потому что нам нужно одно-единственное поле, а не весь объект User целиком.
+class EmailChangeForm(forms.Form):
+    email = forms.EmailField(required=True, label="Новый email")
+
+    # user передаём вручную при создании формы (см. views.py),
+    # чтобы знать, ЧЕЙ email меняем и с кем сравнивать на уникальность.
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    # clean_<имя_поля> — специальный метод Django: вызывается автоматически
+    # при form.is_valid() для проверки именно поля email.
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        # exclude(pk=self.user.pk) — исключаем самого пользователя из проверки,
+        # иначе форма ругалась бы "email уже занят", даже если человек
+        # просто сохранил свой текущий email без изменений.
+        if User.objects.exclude(pk=self.user.pk).filter(email=email).exists():
+            raise forms.ValidationError("Этот email уже используется другим пользователем.")
+        return email
+
+    # save() вызываем вручную из view после успешной валидации (is_valid() == True)
+    def save(self):
+        self.user.email = self.cleaned_data['email']
+        self.user.save()
+        return self.user

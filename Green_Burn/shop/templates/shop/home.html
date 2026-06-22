@@ -31,9 +31,7 @@
     {% for category in categories %}
     <a href="{% url 'product_list' %}?category={{ category.id }}"
        class="category-tile"
-       {% with first_product=category.products.first %}
-       {% if first_product and first_product.photo %}style="background-image: url('{{ first_product.photo.url }}')"{% endif %}
-       {% endwith %}>
+       {% if category.image_filename %}style="background-image: url('{% static 'images/' %}{{ category.image_filename }}')"{% endif %}>
         <span class="category-tile-sticker">Каталог</span>
         <span class="category-tile-name">{{ category.name }}</span>
     </a>

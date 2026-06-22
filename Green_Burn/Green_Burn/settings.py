@@ -9,23 +9,28 @@ https://docs.djangoproject.com/en/6.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
-
 from pathlib import Path
+import os
+import dj_database_url
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+load_dotenv(BASE_DIR / '.env')
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+# SECRET_KEY берётся из переменной окружения — в продакшне задаётся в Railway,
+# локально — в файле .env. Никогда не оставляй реальный ключ прямо в коде на GitHub
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-m6z3wckhi%#ypf=@7pb-#mn3_%+88b^l&a5gu$kxy60h^ni5n(')
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-m6z3wckhi%#ypf=@7pb-#mn3_%+88b^l&a5gu$kxy60h^ni5n('
+# в продакшне (Railway) DEBUG=False, локально — True по умолчанию
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'testserver']
+# локально работает через 127.0.0.1, в продакшне добавляется домен Railway
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',') + ['.up.railway.app']
 
 
 # Application definition
@@ -43,6 +48,9 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # WhiteNoise должен идти сразу после SecurityMiddleware —
+    # он раздаёт статику (CSS/JS/картинки) без Nginx в продакшне
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -80,12 +88,22 @@ WSGI_APPLICATION = 'Green_Burn.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# в продакшне (Railway) DATABASE_URL задаётся автоматически при добавлении PostgreSQL.
+# локально DATABASE_URL не задана — используем SQLite как раньше
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL:
+    # продакшн: PostgreSQL на Railway
+    DATABASES = {
+        'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
     }
-}
+else:
+    # локальная разработка: SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -133,14 +151,17 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / "static", 
 ]
+# WhiteNoise сжимает и кэширует статику в продакшне —
+# без этого CSS/JS не будут раздаваться Railway
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # для отправки по EMAIL
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'        # SMTP-сервер Gmail
 EMAIL_PORT = 587                     # Порт для TLS
 EMAIL_USE_TLS = True                 # Используем шифрование
-EMAIL_HOST_USER = ''      # Ваша почта, с которой будут отправляться письма
-EMAIL_HOST_PASSWORD = ''    # Пароль или app password
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 
 #Аунтентификация
 REST_FRAMEWORK = {
@@ -153,3 +174,9 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ]
 }
+
+# в продакшне куки передаются только по HTTPS —
+# защита от перехвата сессии и CSRF-токена по незащищённому соединению
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True

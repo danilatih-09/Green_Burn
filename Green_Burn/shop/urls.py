@@ -32,6 +32,7 @@ urlpatterns = [
     path('login/', views.CustomLoginView.as_view(), name='login'),
     path('logout/', views.CustomLogoutView.as_view(), name='logout'),
     path('account/', views.account, name='account'),
+    path('account/settings/', views.account_settings, name='account_settings'),
     path('account/orders/<int:pk>/', views.order_detail, name='order_detail'),
 
     path('catalog/', views.product_list, name='product_list'),

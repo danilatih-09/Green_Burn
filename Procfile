@@ -1,0 +1,1 @@
+web: gunicorn Green_Burn.wsgi --chdir Green_Burn

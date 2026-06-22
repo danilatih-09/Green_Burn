@@ -147,7 +147,14 @@ class Profile(models.Model):
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
-        Profile.objects.create(user=instance)
+        # instance — это только что созданный User.
+        # is_superuser = True у пользователей, созданных через createsuperuser.
+        # Если это суперпользователь — сразу даём ему роль ADMIN,
+        # иначе (обычная регистрация) — роль CUSTOMER (покупатель).
+        # Раньше роль всегда была CUSTOMER, поэтому админ в личном кабинете
+        # видел надпись "Покупатель".
+        role = Profile.ROLE_ADMIN if instance.is_superuser else Profile.ROLE_CUSTOMER
+        Profile.objects.create(user=instance, role=role)
 
 
 # ЗАКАЗ

@@ -61,10 +61,16 @@
 <footer>
     <p>© 2026 GREEN Burn — флористика, декор и товары для сада</p>
     <p class="footer-links">
-        <a href="{% url 'about' %}">О магазине</a> ·
-        <a href="{% url 'author' %}">Об авторе</a> ·
-        <a href="/admin/">Админка</a>
-    </p>
+    <a href="{% url 'about' %}">О магазине</a> ·
+    <a href="{% url 'author' %}">Об авторе</a>
+
+    {# Ссылка "Админка" теперь видна только залогиненному суперпользователю. #}
+    {# user.is_authenticated — пользователь вообще вошёл в аккаунт. #}
+    {# user.is_superuser — это именно суперпользователь (полные права Django). #}
+    {% if user.is_authenticated and user.is_superuser %}
+    · <a href="/admin/">Админка</a>
+    {% endif %}
+</p>
 </footer>
 
 <script src="{% static 'js/main.js' %}"></script>
