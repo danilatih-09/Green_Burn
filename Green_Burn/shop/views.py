@@ -457,16 +457,17 @@ def checkout(request):
             # отправка письма на email из формы
             # обернул в try/except: если SMTP не настроен (EMAIL_HOST_USER пустой),
             # раньше вся страница падала с ошибкой вместо показа сообщения об заказе
-            try:
-                send_mail(
-                    "Ваш заказ оформлен",
-                    f"Спасибо за покупку! Номер вашего заказа: {order_number}",
-                    settings.EMAIL_HOST_USER,  # от кого
-                    [email],             # кому
-                    fail_silently=True,
-                )
-            except Exception:
-                pass
+            if settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD:
+                try:
+                    send_mail(
+                        "Ваш заказ оформлен",
+                        f"Спасибо за покупку! Номер вашего заказа: {order_number}",
+                        settings.EMAIL_HOST_USER,
+                        [email],
+                        fail_silently=True,
+                    )
+                except Exception:
+                    pass
 
             message = f"Заказ {order_number} оформлен! Чек создан."
  
