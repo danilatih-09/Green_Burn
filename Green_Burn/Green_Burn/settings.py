@@ -180,3 +180,9 @@ REST_FRAMEWORK = {
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+# разрешаем CSRF для домена Railway — без этого все POST-запросы
+# (вход, регистрация, оформление заказа) будут отклоняться с ошибкой 403
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.up.railway.app',
+]
