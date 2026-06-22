@@ -1,1 +1,1 @@
-web: cd Green_Burn && python manage.py collectstatic --noinput && gunicorn Green_Burn.wsgi
+web: bash start.sh
