@@ -18,6 +18,7 @@ from openpyxl import Workbook
 import random
 import json
 from datetime import datetime
+import os, tempfile
 
 from rest_framework import viewsets, generics, permissions
 from .serializers import (
@@ -450,7 +451,7 @@ def checkout(request):
             sheet["A7"] = "Дата заказа:"
             sheet["B7"] = order_date.strftime("%d-%m-%Y %H:%M")
 
-            filename = f"order_{order_number}.xlsx"
+            filename = os.path.join(tempfile.gettempdir(), f"order_{order_number}.xlsx")
             workbook.save(filename)
 
             # отправка письма на email из формы
