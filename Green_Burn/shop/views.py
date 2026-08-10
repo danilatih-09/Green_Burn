@@ -211,23 +211,33 @@ def product_list(request):
          Q(name__icontains=search_query) | 
          Q(description__icontains=search_query)
       )
+
+  # Сортировка по цене (?sort=price_asc / ?sort=price_desc)
+   sort = request.GET.get('sort', '')
+   if sort == 'price_asc':
+      products = products.order_by('price')
+   elif sort == 'price_desc':
+      products = products.order_by('-price')
+
   # ПОлучаем все категрии и производитеелй для выпадающих спиосков 
    manufacturers = Manufacturer.objects.all()
    categories = Category.objects.all()
 
-   # добавил пагинацию: по 9 товаров на страницу
-   paginator = Paginator(products, 9)
+   # пагинация: 12 товаров на страницу
+   paginator = Paginator(products, 12)
    page_number = request.GET.get('page')
    page_obj = paginator.get_page(page_number)
 
    # Контекст для шаблона 
    context = {
       'products': products,
+      'page_obj': page_obj,
       'categories': categories,
       'manufacturers': manufacturers,
       'selected_categories': category_id,
       'selected_manufacturers': manufacturer_id,
       'search_query': search_query,
+      'selected_sort': sort,
   }
    
   # render - функция которя собирает данные и преоброзует в HTML шаблон 
@@ -278,9 +288,22 @@ def add_to_cart(request, product_id):
 
 # новый эндпоинт специально для JS (main.js): принимает JSON, отдаёт JSON,
 # чтобы добавление в корзину можно было делать через fetch без перезагрузки страницы
-@login_required(login_url='/login/')
+#
+# ВАЖНО: здесь нельзя использовать @login_required(login_url='/login/') — для
+# fetch-запроса это давало не JSON, а HTML-редирект на страницу логина со статусом 200.
+# fetch молча следовал за редиректом, получал HTML вместо JSON, и main.js падал
+# на response.json() с ошибкой парсинга ("Unexpected token '<'..."), которую
+# показывал пользователю вместо нормального "Войдите в систему".
+# Вместо этого проверяем авторизацию вручную и отдаём JSON с кодом 401 —
+# apiFetch в main.js уже умеет такие ответы обрабатывать и показывать тост с входом.
 @require_POST
 def api_add_to_cart(request):
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {'ok': False, 'error': 'Войдите в систему, чтобы добавить товар в корзину'},
+            status=401,
+        )
+
     try:
         data = json.loads(request.body or '{}')
     except json.JSONDecodeError:

@@ -1,8 +1,25 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="ru" data-theme="dark">
+<html lang="ru" data-theme="light">
 <head>
     <meta charset="UTF-8">
+
+    <!-- Тема выставляется здесь, синхронно, ДО того как браузер начнёт отрисовывать
+         страницу — поэтому переключения темы не видно глазом при переходах между
+         страницами. Раньше эта логика была в main.js, который подключён в конце
+         <body> и выполняется только после отрисовки всей страницы: сначала долю
+         секунды была видна тёмная тема (по умолчанию в разметке), затем JS
+         переключал на сохранённую/светлую — это и давало эффект "мигания".
+         По умолчанию (если пользователь ещё ни разу не переключал тему) используется
+         светлая тема. -->
+    <script>
+        (function () {
+            var saved = localStorage.getItem('gb-theme');
+            var theme = (saved === 'dark') ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+
     <title>{% block title %}GREEN Burn{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -24,30 +41,42 @@
             <div class="logo">GREEN BURN</div>
         </a>
 
-        <ul class="nav-links">
-            <li><a href="{% url 'home' %}">Главная</a></li>
-            <li><a href="{% url 'product_list' %}">Каталог</a></li>
-            <li><a href="{% url 'cart_view' %}">Корзина</a></li>
-            <li><a href="{% url 'about' %}">О магазине</a></li>
-        </ul>
+        <!-- бургер: скрыт на ПК (display:none по умолчанию), появляется только
+             на мобильных экранах через media query в style.css -->
+        <button id="nav-burger" class="nav-burger" type="button" aria-label="Открыть меню" aria-expanded="false">
+            <span></span><span></span><span></span>
+        </button>
 
-        <div class="nav-right">
-            <!-- переключатель темы: светлая/тёмная, сохраняется в localStorage браузера (main.js) -->
-            <button id="theme-toggle" class="theme-toggle" type="button" title="Сменить тему" aria-label="Сменить тему">
-                <span class="theme-toggle-icon">🌙</span>
-            </button>
+        <!-- .nav-menu на ПК имеет display:contents (см. style.css) — то есть
+             для раскладки браузер её игнорирует, и nav-links/nav-right ведут себя
+             ровно как раньше, до добавления мобильного меню. На мобильных экранах
+             эта же обёртка превращается в выпадающую панель под шапкой сайта -->
+        <div class="nav-menu" id="nav-menu">
+            <ul class="nav-links">
+                <li><a href="{% url 'home' %}">Главная</a></li>
+                <li><a href="{% url 'product_list' %}">Каталог</a></li>
+                <li><a href="{% url 'cart_view' %}">Корзина</a></li>
+                <li><a href="{% url 'about' %}">О магазине</a></li>
+            </ul>
 
-            {% if user.is_authenticated %}
-                <a href="{% url 'account' %}" class="btn btn-outline btn-sm">Кабинет</a>
-                <!-- logout через POST, не GET — Django LogoutView требует POST-запрос,
-                     обычная ссылка <a href> отправляла бы GET и не сработала бы -->
-                <form method="post" action="{% url 'logout' %}" style="display:inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-outline btn-sm">Выйти</button>
-                </form>
-            {% else %}
-                <a href="{% url 'login' %}" class="btn btn-sm">Войти</a>
-            {% endif %}
+            <div class="nav-right">
+                <!-- переключатель темы: светлая/тёмная, сохраняется в localStorage браузера (main.js) -->
+                <button id="theme-toggle" class="theme-toggle" type="button" title="Сменить тему" aria-label="Сменить тему">
+                    <span class="theme-toggle-icon">🌙</span>
+                </button>
+
+                {% if user.is_authenticated %}
+                    <a href="{% url 'account' %}" class="btn btn-outline btn-sm">Кабинет</a>
+                    <!-- logout через POST, не GET — Django LogoutView требует POST-запрос,
+                         обычная ссылка <a href> отправляла бы GET и не сработала бы -->
+                    <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline btn-sm">Выйти</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-sm">Войти</a>
+                {% endif %}
+            </div>
         </div>
     </div>
 </nav>

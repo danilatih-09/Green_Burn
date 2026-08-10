@@ -37,12 +37,21 @@
                 <input type="text" id="filter-search" name="search" placeholder="Название товара..." value="{{ search_query }}">
             </div>
 
+            <div class="filter-group">
+                <label for="filter-sort">Сортировка по цене</label>
+                <select id="filter-sort" name="sort">
+                    <option value="">По умолчанию</option>
+                    <option value="price_asc" {% if selected_sort == "price_asc" %}selected{% endif %}>Сначала дешевле</option>
+                    <option value="price_desc" {% if selected_sort == "price_desc" %}selected{% endif %}>Сначала дороже</option>
+                </select>
+            </div>
+
             <button type="submit" class="btn">Применить фильтры</button>
         </form>
     </aside>
 
     <div class="product-grid">
-        {% for product in products %}
+        {% for product in page_obj %}
         <div class="product-card">
             {% if product.photo %}
             <img src="{{ product.photo.url }}" class="product-image" alt="{{ product.name }}">
@@ -57,7 +66,7 @@
                 <div class="product-actions">
                     <a href="{% url 'product_detail' product.pk %}" class="btn btn-outline">Подробнее</a>
                     {% if product.quantities_stock > 0 %}
-                    <button type="button" class="btn" onclick="addToCart({{ product.id }})">В корзину</button>
+                    <button type="button" class="btn" data-product-id="{{ product.id }}" onclick="addToCart(this.dataset.productId)">В корзину</button>
                     {% else %}
                     <button type="button" class="btn disabled" disabled>Нет в наличии</button>
                     {% endif %}
@@ -68,23 +77,23 @@
         <div class="empty-state">По выбранным фильтрам товары не найдены</div>
         {% endfor %}
 
-        <!-- пагинация: по 9 товаров на страницу, сохраняем параметры фильтров при переходе по страницам -->
+        <!-- пагинация: по 12 товаров на страницу, сохраняем параметры фильтров и сортировку при переходе по страницам -->
         {% if page_obj.paginator.num_pages > 1 %}
         <div class="pagination">
             {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}{% if selected_categories %}&category={{ selected_categories }}{% endif %}{% if selected_manufacturers %}&manufacturer={{ selected_manufacturers }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">‹</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if selected_categories %}&category={{ selected_categories }}{% endif %}{% if selected_manufacturers %}&manufacturer={{ selected_manufacturers }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}">‹</a>
             {% endif %}
 
             {% for num in page_obj.paginator.page_range %}
                 {% if num == page_obj.number %}
                     <span class="current">{{ num }}</span>
                 {% else %}
-                    <a href="?page={{ num }}{% if selected_categories %}&category={{ selected_categories }}{% endif %}{% if selected_manufacturers %}&manufacturer={{ selected_manufacturers }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">{{ num }}</a>
+                    <a href="?page={{ num }}{% if selected_categories %}&category={{ selected_categories }}{% endif %}{% if selected_manufacturers %}&manufacturer={{ selected_manufacturers }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}">{{ num }}</a>
                 {% endif %}
             {% endfor %}
 
             {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}{% if selected_categories %}&category={{ selected_categories }}{% endif %}{% if selected_manufacturers %}&manufacturer={{ selected_manufacturers }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">›</a>
+                <a href="?page={{ page_obj.next_page_number }}{% if selected_categories %}&category={{ selected_categories }}{% endif %}{% if selected_manufacturers %}&manufacturer={{ selected_manufacturers }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}">›</a>
             {% endif %}
         </div>
         {% endif %}

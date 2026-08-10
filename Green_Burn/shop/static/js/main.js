@@ -1,25 +1,13 @@
 // ===== Тема (светлая / тёмная) =====
-// Тема хранится в localStorage браузера пользователя и применяется к <html data-theme="...">
-(function initTheme() {
-    const root = document.documentElement;
-    const saved = localStorage.getItem('gb-theme');
-
-    if (saved === 'light' || saved === 'dark') {
-        root.setAttribute('data-theme', saved);
-    } else {
-        // если темы ещё не выбирали — подстраиваемся под системные настройки устройства
-        const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
-        root.setAttribute('data-theme', prefersLight ? 'light' : 'dark');
-    }
-
-    updateThemeIcon();
-})();
-
+// Сама тема выставляется в <html data-theme="..."> ещё в <head> базового шаблона
+// (base.html) синхронным inline-скриптом — до отрисовки страницы, чтобы не было
+// "мигания" темы при переходах между страницами. Здесь остаётся только переключение
+// темы по кнопке и обновление иконки.
 function updateThemeIcon() {
     const icon = document.querySelector('.theme-toggle-icon');
     if (!icon) return;
     const theme = document.documentElement.getAttribute('data-theme');
-    icon.textContent = theme === 'light' ? '☀️' : '🌙';
+    icon.textContent = theme === 'dark' ? '🌙' : '☀️';
 }
 
 function toggleTheme() {
@@ -32,9 +20,31 @@ function toggleTheme() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    updateThemeIcon();
     const toggleBtn = document.getElementById('theme-toggle');
     if (toggleBtn) {
         toggleBtn.addEventListener('click', toggleTheme);
+    }
+
+    // ===== Мобильное бургер-меню =====
+    // класс nav-open на .nav-container раскрывает .nav-menu (см. media query в style.css);
+    // на ПК это ни на что не влияет, т.к. бургер там скрыт и класс никогда не добавится
+    const burger = document.getElementById('nav-burger');
+    const navContainer = document.querySelector('.nav-container');
+    if (burger && navContainer) {
+        burger.addEventListener('click', () => {
+            const isOpen = navContainer.classList.toggle('nav-open');
+            burger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
+
+        // закрываем меню при переходе по ссылке/кнопке внутри него,
+        // чтобы после перехода на новую страницу меню не оставалось открытым
+        document.querySelectorAll('#nav-menu a, #nav-menu button[type="submit"]').forEach(el => {
+            el.addEventListener('click', () => {
+                navContainer.classList.remove('nav-open');
+                burger.setAttribute('aria-expanded', 'false');
+            });
+        });
     }
 });
 
