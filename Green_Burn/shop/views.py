@@ -400,6 +400,8 @@ def cart_view(request):
 
 # Оформление заказа
 
+# Оформление заказа
+
 # было @login_required без login_url — при анонимном доступе редиректило на
 # несуществующий /accounts/login/ (404), теперь ведёт на админский логин, как остальные cart-функции
 @login_required(login_url='/login/')
@@ -428,71 +430,99 @@ def checkout(request):
             # навсегда пустыми, даже если человек реально оформил покупку
             cart, _ = Cart.objects.get_or_create(user=request.user)
             cart_items = list(cart.items.select_related('product').all())
-            total_cost = sum(item.item_cost() for item in cart_items)
 
-            order = Order.objects.create(
-                user=request.user,
-                order_number=str(order_number),
-                first_name=first_name,
-                last_name=last_name,
-                email=email,
-                address=address,
-                total_cost=total_cost,
-            )
+            # проверяем, что на складе всё ещё хватает каждого товара — на случай,
+            # если кто-то другой купил его, пока этот пользователь держал товар в корзине
+            insufficient = [
+                item for item in cart_items
+                if item.quantities > item.product.quantities_stock
+            ]
 
-            # OrderItem хранит снимок цены/названия на момент покупки (см. models.py)
-            for item in cart_items:
-                OrderItem.objects.create(
-                    order=order,
-                    product=item.product,
-                    product_name=item.product.name,
-                    price=item.product.price,
-                    quantity=item.quantities,
+            if not cart_items:
+                message = "Ваша корзина пуста."
+            elif insufficient:
+                names = ", ".join(item.product.name for item in insufficient)
+                message = f"Недостаточно товара на складе: {names}. Обновите корзину и попробуйте снова."
+            else:
+                total_cost = sum(item.item_cost() for item in cart_items)
+
+                order = Order.objects.create(
+                    user=request.user,
+                    order_number=str(order_number),
+                    first_name=first_name,
+                    last_name=last_name,
+                    email=email,
+                    address=address,
+                    total_cost=total_cost,
                 )
 
-            # после оформления заказа корзина очищается — иначе те же товары
-            # остались бы в корзине и человек мог бы "оформить" их повторно
-            cart.items.all().delete()
-
-            # создаем Excel файл
-            workbook = Workbook()
-            sheet = workbook.active
-
-            sheet["A1"] = "Чек заказа"
-            sheet["A3"] = "Номер заказа:"
-            sheet["B3"] = order_number
-
-            sheet["A4"] = "Покупатель:"
-            sheet["B4"] = f"{first_name} {last_name}"
-
-            sheet["A5"] = "Email:"
-            sheet["B5"] = email
-
-            sheet["A6"] = "Адрес доставки:"
-            sheet["B6"] = address
-
-            sheet["A7"] = "Дата заказа:"
-            sheet["B7"] = order_date.strftime("%d-%m-%Y %H:%M")
-
-            filename = os.path.join(tempfile.gettempdir(), f"order_{order_number}.xlsx")
-            workbook.save(filename)
-
-            # отправка письма на email из формы
-            # обернул в try/except: если SMTP не настроен (EMAIL_HOST_USER пустой),
-            # раньше вся страница падала с ошибкой вместо показа сообщения об заказе
-            if settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD:
-                try:
-                    send_mail(
-                        "Ваш заказ оформлен",
-                        f"Спасибо за покупку! Номер вашего заказа: {order_number}",
-                        settings.EMAIL_HOST_USER,
-                        [email],
-                        fail_silently=True,
+                # OrderItem хранит снимок цены/названия на момент покупки (см. models.py)
+                for item in cart_items:
+                    OrderItem.objects.create(
+                        order=order,
+                        product=item.product,
+                        product_name=item.product.name,
+                        price=item.product.price,
+                        quantity=item.quantities,
                     )
-                except Exception:
-                    pass
 
-            message = f"Заказ {order_number} оформлен! Чек создан."
+                    # раньше остаток на складе (quantities_stock) нигде не уменьшался после
+                    # покупки — из-за этого товар оставался "в наличии" в том же количестве
+                    # даже после того, как его полностью выкупили. Списываем купленное количество
+                    # прямо здесь, сразу после создания OrderItem по этому товару
+                    product = item.product
+                    product.quantities_stock = max(0, product.quantities_stock - item.quantities)
+                    product.save(update_fields=['quantities_stock'])
+
+                # после оформления заказа корзина очищается — иначе те же товары
+                # остались бы в корзине и человек мог бы "оформить" их повторно
+                cart.items.all().delete()
+
+                # создаем Excel файл
+                workbook = Workbook()
+                sheet = workbook.active
+
+                sheet["A1"] = "Чек заказа"
+                sheet["A3"] = "Номер заказа:"
+                sheet["B3"] = order_number
+
+                sheet["A4"] = "Покупатель:"
+                sheet["B4"] = f"{first_name} {last_name}"
+
+                sheet["A5"] = "Email:"
+                sheet["B5"] = email
+
+                sheet["A6"] = "Адрес доставки:"
+                sheet["B6"] = address
+
+                sheet["A7"] = "Дата заказа:"
+                sheet["B7"] = order_date.strftime("%d-%m-%Y %H:%M")
+
+                filename = os.path.join(tempfile.gettempdir(), f"order_{order_number}.xlsx")
+                workbook.save(filename)
+
+                # отправка письма на email из формы
+                # обернул в try/except: если SMTP не настроен (EMAIL_HOST_USER пустой),
+                # раньше вся страница падала с ошибкой вместо показа сообщения об заказе
+                if settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD:
+                    try:
+                        send_mail(
+                            "Ваш заказ оформлен",
+                            f"Спасибо за покупку! Номер вашего заказа: {order_number}",
+                            settings.EMAIL_HOST_USER,
+                            [email],
+                            fail_silently=True,
+                        )
+                    except Exception:
+                        pass
+
+                message = f"Заказ {order_number} оформлен! Чек создан."
+
+            # если заказ не прошёл (пустая корзина / не хватает товара на складе) —
+            # order_number должен остаться пустым, иначе шаблон покажет экран
+            # "Заказ оформлен" с номером несуществующего заказа
+            if not message.startswith("Заказ"):
+                order_number = None
  
     return render(request, "shop/checkout.html", {"message": message, "order_number": order_number})
 

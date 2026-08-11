@@ -89,6 +89,7 @@ html[data-theme="light"] nav {
     justify-content: space-between;
     align-items: center;
     gap: 30px;
+    position: relative; /* нужно для абсолютного позиционирования мобильной панели меню; на десктопе никак не влияет, т.к. top/left не заданы */
 }
 
 .logo {
@@ -145,6 +146,45 @@ html[data-theme="light"] nav {
     align-items: center;
     gap: 16px;
 }
+
+/* .nav-menu оборачивает nav-links + nav-right ради мобильного меню.
+   На ПК display:contents убирает эту обёртку из раскладки — для CSS grid/flex
+   родителя (.nav-container) её как будто не существует, дети (.nav-links, .nav-right)
+   участвуют в flex-раскладке точно так же, как участвовали напрямую до этого изменения.
+   Поэтому вид на ПК гарантированно не меняется */
+.nav-menu {
+    display: contents;
+}
+
+/* бургер скрыт по умолчанию (на ПК) — появляется только в мобильной media query ниже */
+.nav-burger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 42px;
+    height: 42px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.nav-burger span {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: var(--text-main);
+    transition: 0.3s;
+}
+
+/* анимация в крестик при открытом меню */
+.nav-container.nav-open .nav-burger span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-container.nav-open .nav-burger span:nth-child(2) { opacity: 0; }
+.nav-container.nav-open .nav-burger span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
 .theme-toggle {
     width: 42px;
@@ -310,9 +350,74 @@ footer {
 }
 
 @media (max-width: 1000px) {
-    .nav-container { padding: 20px; flex-wrap: wrap; }
-    .nav-links { order: 3; width: 100%; justify-content: center; gap: 20px; }
+    .nav-container { padding: 18px 20px; }
     .container { padding: 40px 20px; }
+
+    .nav-burger { display: flex; }
+
+    /* на мобильных .nav-menu превращается из "невидимой" обёртки в выпадающую
+       панель под шапкой сайта, раскрывается по клику на бургер (main.js добавляет
+       класс nav-open на .nav-container) */
+    .nav-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        align-items: stretch;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        box-shadow: 0 20px 40px var(--shadow-color);
+        padding: 6px 20px 24px;
+    }
+
+    .nav-container.nav-open .nav-menu {
+        display: flex;
+    }
+
+    .nav-links {
+        flex-direction: column;
+        gap: 0;
+        width: 100%;
+    }
+
+    .nav-links a {
+        display: block;
+        padding: 16px 4px;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 14px;
+    }
+
+    .nav-right {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        width: 100%;
+        margin-top: 16px;
+    }
+
+    .nav-right .btn,
+    .nav-right form,
+    .nav-right form .btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    .theme-toggle {
+        align-self: flex-end;
+        margin-bottom: 4px;
+    }
+}
+
+/* доп. подстройка под совсем маленькие экраны телефонов */
+@media (max-width: 480px) {
+    .hero-title { font-size: 32px; }
+    .page-header h1 { font-size: 32px; }
+    .section-title { font-size: 28px; }
+    .product-title { font-size: 28px; }
+    .checkout-box { padding: 28px; }
+    .account-header { flex-direction: column; align-items: flex-start; gap: 16px; }
 }
 
 /* ===== Главная страница (home.html) ===== */
